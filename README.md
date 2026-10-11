@@ -5,7 +5,7 @@ All data is stored in the browser's localStorage.
 
 ## Layout
 
-- `index.html` – the app (renamed from `wealthr-v3.html`)
+- `index.html` – the whole app (HTML, CSS and JS in one file)
 - `netlify.toml` – publishes the repo root and sets a CSP allowing Google Fonts,
   Chart.js from jsDelivr, and calls to `api.anthropic.com`
 
