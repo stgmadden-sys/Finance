@@ -541,6 +541,7 @@ nav.tabs button.on .ico { filter: none; opacity: 1; }
       <p class="sub">Paste your Anthropic API key to activate advisors outside of Claude.ai. Inside claude.ai they work automatically — no key needed.</p>
       <div class="form">
         <label class="f">Anthropic API key<input id="apiKey" type="password" autocomplete="off" placeholder="sk-ant-…"></label>
+        <label class="f">Workspace ID (only if your key isn't scoped to a workspace)<input id="workspaceId" autocomplete="off" spellcheck="false" placeholder="wrkspc_…"></label>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <button class="btn" id="saveKey">Save key</button>
           <button class="btn ghost" id="testKey">Test connection</button>
@@ -608,6 +609,7 @@ nav.tabs button.on .ico { filter: none; opacity: 1; }
 /* ---------- Storage ---------- */
 const STORE_KEY = 'wealthr.v3';
 const KEY_KEY = 'wealthr.apiKey';
+const WS_KEY = 'wealthr.workspaceId';
 const UI_KEY = 'wealthr.ui';
 
 const ls = {
@@ -715,7 +717,7 @@ const catColor = cat => palette()[Math.max(0, CATEGORIES.indexOf(cat)) % 8];
 
 function toast(msg) {
   const t = $('toast'); t.textContent = msg; t.classList.add('show');
-  clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), 2200);
+  clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), Math.max(2200, msg.length * 60));
 }
 
 /* Minimal, safe markdown: escape first, then format. */
@@ -985,6 +987,7 @@ function renderSettings() {
   else if (inClaude()) { pill.textContent = '✓ claude.ai'; pill.className = 'pill ok'; }
   else { pill.textContent = '⚡ Not connected'; pill.className = 'pill'; }
   $('apiKey').value = key ? '••••••••' + key.slice(-4) : '';
+  $('workspaceId').value = ls.get(WS_KEY) || '';
   $('currencySel').value = S.currency;
   $('themeSel').value = getUI().theme || 'system';
 }
@@ -1031,6 +1034,7 @@ async function askAI(messages) {
     return await window.claude.complete(`${SYSTEM}\n\n${transcript}\n\nAssistant:`);
   }
   if (!key) throw new Error('No API key. Add your Anthropic API key in Settings to use the advisor here.');
+  const workspace = ls.get(WS_KEY);
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -1039,6 +1043,7 @@ async function askAI(messages) {
       'anthropic-version': '2023-06-01',
       'anthropic-beta': 'server-side-fallback-2026-07-01',
       'anthropic-dangerous-direct-browser-access': 'true',
+      ...(workspace ? { 'anthropic-workspace-id': workspace } : {}),
     },
     body: JSON.stringify({
       model: 'claude-opus-5-5',
@@ -1054,6 +1059,7 @@ async function askAI(messages) {
   if (!res.ok) {
     const msg = data?.error?.message || `HTTP ${res.status}`;
     if (res.status === 401) throw new Error('Invalid API key. Check it in Settings.');
+    if (/workspace/i.test(msg) && !workspace) throw new Error('This key isn\'t tied to a workspace. Add your Workspace ID in Settings (Console → Settings → Workspaces), or create a key inside a workspace.');
     throw new Error(msg);
   }
   if (data.stop_reason === 'refusal') throw new Error('The advisor declined to answer that request.');
@@ -1222,9 +1228,11 @@ function bind() {
     const v = $('apiKey').value.trim();
     if (!v || v.startsWith('••')) return toast('Paste a key first');
     if (!v.startsWith('sk-ant-')) return toast('That doesn\'t look like an Anthropic key');
-    ls.set(KEY_KEY, v); renderSettings(); toast('Key saved on this device');
+    ls.set(KEY_KEY, v); saveWorkspace(); renderSettings(); toast('Key saved on this device');
   });
-  $('clearKey').addEventListener('click', () => { ls.del(KEY_KEY); renderSettings(); toast('Key removed'); });
+  const saveWorkspace = () => { const w = $('workspaceId').value.trim(); if (w) ls.set(WS_KEY, w); else ls.del(WS_KEY); };
+  $('workspaceId').addEventListener('change', () => { saveWorkspace(); toast('Workspace saved'); });
+  $('clearKey').addEventListener('click', () => { ls.del(KEY_KEY); ls.del(WS_KEY); renderSettings(); toast('Key removed'); });
   $('testKey').addEventListener('click', async e => {
     const btn = e.currentTarget; btn.disabled = true; btn.textContent = 'Testing…';
     try { await askAI([{ role: 'user', content: 'Reply with just the word: connected' }]); toast('✓ Advisor connected'); }
