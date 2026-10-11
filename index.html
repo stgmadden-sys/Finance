@@ -1,0 +1,1289 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Wealthr">
+<meta name="theme-color" content="#0e1116">
+<title>Wealthr</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg: #f6f5f1; --surface: #ffffff; --surface-2: #efede7; --border: #e2dfd7;
+  --text: #17191c; --muted: #6b6f76; --accent: #1f7a5a; --accent-soft: #dcefe6;
+  --danger: #c2413b; --warn: #b7791f; --gold: #a67c2d;
+  --shadow: 0 1px 2px rgba(0,0,0,.04), 0 4px 16px rgba(0,0,0,.05);
+  --radius: 16px;
+  --c1:#1f7a5a; --c2:#3a6ea5; --c3:#c97b2b; --c4:#8e5ba8; --c5:#c2413b; --c6:#4f9d9a; --c7:#a67c2d; --c8:#6b6f76;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1116; --surface: #161a21; --surface-2: #1d222b; --border: #262c36;
+    --text: #eceef1; --muted: #949aa5; --accent: #4cc497; --accent-soft: #173a2e;
+    --danger: #ef6b64; --warn: #e3a74a; --gold: #d8b06a;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 4px 16px rgba(0,0,0,.25);
+    --c1:#4cc497; --c2:#6fa3dc; --c3:#e3a74a; --c4:#b48ad0; --c5:#ef6b64; --c6:#6cc3bf; --c7:#d8b06a; --c8:#949aa5;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1116; --surface: #161a21; --surface-2: #1d222b; --border: #262c36;
+  --text: #eceef1; --muted: #949aa5; --accent: #4cc497; --accent-soft: #173a2e;
+  --danger: #ef6b64; --warn: #e3a74a; --gold: #d8b06a;
+  --shadow: 0 1px 2px rgba(0,0,0,.3), 0 4px 16px rgba(0,0,0,.25);
+  --c1:#4cc497; --c2:#6fa3dc; --c3:#e3a74a; --c4:#b48ad0; --c5:#ef6b64; --c6:#6cc3bf; --c7:#d8b06a; --c8:#949aa5;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--bg); color: var(--text);
+  font: 15px/1.5 Inter, system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  padding-bottom: calc(84px + env(safe-area-inset-bottom));
+}
+h1, h2, h3 { margin: 0; font-weight: 600; letter-spacing: -.01em; }
+.serif { font-family: Fraunces, Georgia, serif; }
+button, input, select, textarea { font: inherit; color: inherit; }
+.wrap { max-width: 960px; margin: 0 auto; padding: 0 16px; }
+
+/* Header */
+header.top {
+  position: sticky; top: 0; z-index: 20;
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  padding-top: env(safe-area-inset-top);
+}
+header.top .wrap { display: flex; align-items: center; justify-content: space-between; height: 56px; }
+.brand { font-family: Fraunces, Georgia, serif; font-size: 24px; font-weight: 600; }
+.brand span { color: var(--accent); }
+.month-label { color: var(--muted); font-size: 13px; }
+
+/* Install banner */
+.banner {
+  display: none; margin: 12px 0 0; padding: 12px 40px 12px 14px; position: relative;
+  background: var(--accent-soft); border-radius: 12px; font-size: 14px;
+}
+.banner.show { display: block; }
+.banner button { position: absolute; right: 6px; top: 6px; background: none; border: 0; font-size: 20px; cursor: pointer; color: var(--muted); padding: 4px 10px; }
+
+/* Sections */
+.view { display: none; padding: 20px 0 24px; }
+.view.active { display: block; }
+.eyebrow { text-transform: uppercase; letter-spacing: .08em; font-size: 11px; font-weight: 600; color: var(--muted); }
+.page-head { margin-bottom: 18px; }
+.page-head h1 { font-family: Fraunces, Georgia, serif; font-size: 32px; font-weight: 500; }
+.page-head p { margin: 2px 0 0; color: var(--muted); }
+
+.card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  box-shadow: var(--shadow); padding: 18px; margin-bottom: 16px;
+}
+.card h2 { font-size: 17px; margin-bottom: 4px; }
+.card .sub { color: var(--muted); font-size: 13px; margin: 0 0 14px; }
+.card-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
+
+.hero { padding: 22px; }
+.hero .big { font-family: Fraunces, Georgia, serif; font-size: 42px; font-weight: 500; line-height: 1.1; margin-top: 4px; font-variant-numeric: tabular-nums; }
+.stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 16px; }
+@media (min-width: 640px) { .stats.four { grid-template-columns: repeat(4, 1fr); } }
+.stat { background: var(--surface-2); border-radius: 12px; padding: 12px; min-width: 0; }
+.stat .label { font-size: 12px; color: var(--muted); }
+.stat .val { font-weight: 600; font-size: 17px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.pos { color: var(--accent); } .neg { color: var(--danger); }
+
+.grid2 { display: grid; gap: 16px; }
+@media (min-width: 760px) { .grid2 { grid-template-columns: 1fr 1fr; } .grid2 > .card { margin-bottom: 0; } .grid2 { margin-bottom: 16px; } }
+
+.chart-box { position: relative; height: 240px; }
+
+/* Forms */
+.form { display: grid; gap: 10px; }
+.row { display: grid; gap: 10px; grid-template-columns: 1fr 1fr; }
+label.f { display: grid; gap: 4px; font-size: 12px; color: var(--muted); min-width: 0; }
+input, select, textarea {
+  width: 100%; min-width: 0; padding: 10px 12px; border-radius: 10px;
+  border: 1px solid var(--border); background: var(--surface-2); font-size: 16px;
+}
+textarea { resize: vertical; min-height: 80px; }
+input:focus, select:focus, textarea:focus { outline: 2px solid var(--accent); outline-offset: 0; border-color: transparent; }
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 10px 16px; border-radius: 10px; border: 1px solid transparent; cursor: pointer;
+  background: var(--accent); color: #fff; font-weight: 600; font-size: 14px;
+}
+:root[data-theme="dark"] .btn:not(.ghost):not(.danger) { color: #08130e; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .btn:not(.ghost):not(.danger) { color: #08130e; } }
+.btn.ghost { background: transparent; color: var(--text); border-color: var(--border); }
+.btn.danger { background: var(--danger); color: #fff; }
+.btn.sm { padding: 6px 10px; font-size: 13px; }
+.btn:disabled { opacity: .55; cursor: default; }
+.icon-btn { background: none; border: 0; color: var(--muted); cursor: pointer; padding: 4px 8px; border-radius: 8px; font-size: 16px; }
+.icon-btn:hover { background: var(--surface-2); color: var(--danger); }
+
+/* Lists */
+.list { display: grid; gap: 2px; }
+.item { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.item:last-child { border-bottom: 0; }
+.item .main { flex: 1; min-width: 0; }
+.item .title { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.item .meta { font-size: 12px; color: var(--muted); }
+.item .amt { font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+.empty { color: var(--muted); font-size: 14px; padding: 8px 0; }
+
+.bar { height: 8px; background: var(--surface-2); border-radius: 99px; overflow: hidden; }
+.bar > i { display: block; height: 100%; background: var(--accent); border-radius: 99px; }
+.bar.over > i { background: var(--danger); }
+.budget-row { display: grid; gap: 6px; padding: 8px 0; }
+.budget-row .top { display: flex; justify-content: space-between; font-size: 14px; gap: 8px; }
+.budget-row .top input { width: 96px; padding: 4px 8px; font-size: 14px; text-align: right; }
+
+/* Horizon tabs */
+.seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; background: var(--surface-2); padding: 4px; border-radius: 12px; margin-bottom: 12px; }
+.seg button { border: 0; background: transparent; padding: 8px 4px; border-radius: 9px; cursor: pointer; font-weight: 600; font-size: 14px; line-height: 1.2; }
+.seg button small { display: block; font-weight: 400; color: var(--muted); font-size: 11px; }
+.seg button.on { background: var(--surface); box-shadow: var(--shadow); }
+
+/* AI output */
+.ai-out { background: var(--surface-2); border-radius: 12px; padding: 14px; margin-top: 12px; font-size: 14px; display: none; overflow-wrap: anywhere; }
+.ai-out.show { display: block; }
+.ai-out h3, .ai-out h4 { font-size: 15px; margin: 12px 0 4px; }
+.ai-out p { margin: 6px 0; }
+.ai-out ul { margin: 6px 0; padding-left: 20px; }
+.ai-out.err { color: var(--danger); }
+.loading { color: var(--muted); font-style: italic; }
+
+/* Chips */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.chip { border: 1px solid var(--border); background: var(--surface); border-radius: 99px; padding: 6px 12px; font-size: 13px; cursor: pointer; }
+.chip:hover { border-color: var(--accent); color: var(--accent); }
+
+/* Chat */
+.chat { display: grid; gap: 10px; max-height: 55vh; overflow-y: auto; padding: 4px 2px 8px; }
+.msg { padding: 10px 14px; border-radius: 14px; max-width: 88%; font-size: 14px; overflow-wrap: anywhere; }
+.msg.user { background: var(--accent); color: #fff; justify-self: end; border-bottom-right-radius: 4px; }
+:root[data-theme="dark"] .msg.user { color: #08130e; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .msg.user { color: #08130e; } }
+.msg.bot { background: var(--surface-2); justify-self: start; border-bottom-left-radius: 4px; }
+.msg.bot p { margin: 4px 0; } .msg.bot ul { margin: 4px 0; padding-left: 18px; }
+.chat-input { display: flex; gap: 8px; margin-top: 10px; }
+.chat-input textarea { min-height: 44px; height: 44px; }
+
+/* Vision */
+.vision { padding: 14px 0; border-bottom: 1px solid var(--border); }
+.vision:last-child { border-bottom: 0; }
+.vision .head { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+.vision .name { font-family: Fraunces, Georgia, serif; font-size: 19px; font-style: italic; }
+.vision .nums { font-size: 13px; color: var(--muted); margin: 6px 0; display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.vision .actions { display: flex; gap: 8px; margin-top: 8px; }
+.vision .actions input { width: 120px; padding: 6px 10px; font-size: 14px; }
+
+/* Week at a glance */
+.week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; text-align: center; }
+.week .d { background: var(--surface-2); border-radius: 10px; padding: 8px 0; font-size: 12px; color: var(--muted); }
+.week .d b { display: block; font-size: 15px; color: var(--text); }
+.week .d.on { background: var(--accent-soft); color: var(--accent); }
+.week .d.today { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+/* Academy */
+details.lesson { border-bottom: 1px solid var(--border); padding: 10px 0; }
+details.lesson:last-child { border-bottom: 0; }
+details.lesson summary { cursor: pointer; font-weight: 500; }
+details.lesson p { color: var(--muted); font-size: 14px; margin: 8px 0 0; }
+
+/* Status pill */
+.pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 99px; font-size: 13px; font-weight: 600; background: var(--surface-2); }
+.pill.ok { background: var(--accent-soft); color: var(--accent); }
+.note { font-size: 13px; color: var(--muted); background: var(--surface-2); border-radius: 12px; padding: 12px; margin-top: 12px; }
+.note a { color: var(--accent); }
+
+/* Bottom nav */
+nav.tabs {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  border-top: 1px solid var(--border);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+nav.tabs .wrap { display: grid; grid-template-columns: repeat(7, 1fr); padding: 0 4px; }
+nav.tabs button {
+  border: 0; background: none; cursor: pointer; padding: 8px 0 10px; color: var(--muted);
+  font-size: 10.5px; font-weight: 500; display: grid; justify-items: center; gap: 2px; min-width: 0;
+}
+nav.tabs button .ico { font-size: 19px; line-height: 1.2; filter: grayscale(1); opacity: .75; }
+nav.tabs button.on { color: var(--accent); }
+nav.tabs button.on .ico { filter: none; opacity: 1; }
+
+/* FAB */
+.fab { position: fixed; right: 16px; bottom: calc(84px + env(safe-area-inset-bottom)); z-index: 31; display: grid; justify-items: end; gap: 8px; }
+.fab .main-fab { width: 54px; height: 54px; border-radius: 50%; border: 0; background: var(--accent); color: #fff; font-size: 26px; cursor: pointer; box-shadow: 0 6px 20px rgba(0,0,0,.25); transition: transform .2s; }
+.fab.open .main-fab { transform: rotate(45deg); }
+.fab .menu { display: none; gap: 8px; justify-items: end; }
+.fab.open .menu { display: grid; }
+.fab .menu button { border: 1px solid var(--border); background: var(--surface); box-shadow: var(--shadow); border-radius: 99px; padding: 9px 14px; font-size: 14px; font-weight: 500; cursor: pointer; white-space: nowrap; }
+
+.toast { position: fixed; left: 50%; bottom: calc(150px + env(safe-area-inset-bottom)); transform: translateX(-50%); background: var(--text); color: var(--bg); padding: 10px 16px; border-radius: 10px; font-size: 14px; opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 50; max-width: calc(100% - 32px); }
+.toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <div class="brand">Wealth<span>r</span></div>
+    <div class="month-label" id="monthLabel"></div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="banner" id="installBanner">
+    <strong>📱 Add to Home Screen</strong> Safari → Share → "Add to Home Screen" to install as an app.
+    <button type="button" id="installClose" aria-label="Dismiss">×</button>
+  </div>
+
+  <!-- HOME -->
+  <section class="view active" id="view-home">
+    <div class="card hero">
+      <div class="eyebrow">Net Worth</div>
+      <div class="big" id="netWorth">—</div>
+      <div class="stats four">
+        <div class="stat"><div class="label">Budget Left</div><div class="val" id="hBudgetLeft">—</div></div>
+        <div class="stat"><div class="label">Portfolio</div><div class="val" id="hPortfolio">—</div></div>
+        <div class="stat"><div class="label">Spent This Month</div><div class="val" id="hSpent">—</div></div>
+        <div class="stat"><div class="label">Invested / mo</div><div class="val" id="hInvested">—</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="eyebrow">Spending Mix</div>
+      <h2>Where Your Money Goes</h2>
+      <p class="sub">This month, by category</p>
+      <div class="chart-box"><canvas id="mixChart"></canvas></div>
+      <div class="empty" id="mixEmpty" hidden>No spending logged this month yet.</div>
+    </div>
+  </section>
+
+  <!-- BUDGET -->
+  <section class="view" id="view-budget">
+    <div class="page-head">
+      <div class="eyebrow">Monthly</div>
+      <h1>Budget</h1>
+      <p>Income, spending &amp; planning</p>
+    </div>
+    <div class="card hero">
+      <div class="eyebrow">Monthly Income</div>
+      <div class="big" id="incomeBig">€0</div>
+      <div class="row" style="margin-top:14px">
+        <label class="f">Income / month<input type="number" id="incomeInput" min="0" step="50" inputmode="decimal"></label>
+        <label class="f">Invested / month<input type="number" id="investInput" min="0" step="25" inputmode="decimal"></label>
+      </div>
+      <label class="f" style="margin-top:10px">Cash &amp; savings balance<input type="number" id="cashInput" min="0" step="100" inputmode="decimal"></label>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2>Category Budgets</h2><span class="month-label" id="budgetTotals"></span></div>
+      <div id="budgetRows"></div>
+    </div>
+
+    <div class="card">
+      <h2>Budget Advisor</h2>
+      <p class="sub">Describe your financial goals and I'll build a personalised plan from your actual numbers.</p>
+      <textarea id="budgetGoals" placeholder="e.g. Save €10k for a house deposit in 18 months while still travelling twice a year."></textarea>
+      <div style="margin-top:10px"><button class="btn" id="budgetAdvise">Build my plan</button></div>
+      <div class="ai-out" id="budgetOut"></div>
+    </div>
+
+    <div class="page-head" style="margin-top:28px"><h1>Spending</h1></div>
+    <div class="grid2">
+      <div class="card">
+        <h2>New Transaction</h2>
+        <p class="sub">Log an expense</p>
+        <form class="form" id="txForm">
+          <label class="f">Description<input id="txDesc" required maxlength="80" placeholder="Groceries"></label>
+          <div class="row">
+            <label class="f">Amount<input id="txAmt" type="number" step="0.01" min="0.01" required inputmode="decimal"></label>
+            <label class="f">Date<input id="txDate" type="date" required></label>
+          </div>
+          <label class="f">Category<select id="txCat"></select></label>
+          <button class="btn" type="submit">Add transaction</button>
+        </form>
+      </div>
+      <div class="card">
+        <h2>Month vs Month</h2>
+        <p class="sub">Spending, last 6 months</p>
+        <div class="chart-box"><canvas id="mvmChart"></canvas></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head"><h2>Transactions</h2><select id="txFilter" style="width:auto"></select></div>
+      <div class="list" id="txList"></div>
+    </div>
+  </section>
+
+  <!-- PORTFOLIO -->
+  <section class="view" id="view-portfolio">
+    <div class="page-head">
+      <div class="eyebrow">Portfolio</div>
+      <h1>Investments</h1>
+      <p>Track, analyse &amp; strategise</p>
+    </div>
+    <div class="card hero">
+      <div class="eyebrow">Portfolio Value</div>
+      <div class="big" id="pValue">€0</div>
+      <div class="stats four">
+        <div class="stat"><div class="label">Invested</div><div class="val" id="pInvested">€0</div></div>
+        <div class="stat"><div class="label">Gain / Loss</div><div class="val" id="pGain">€0</div></div>
+        <div class="stat"><div class="label">Return</div><div class="val" id="pReturn">0%</div></div>
+        <div class="stat"><div class="label">Holdings</div><div class="val" id="pCount">0</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Investment Advisor</h2>
+      <p class="sub">Set goals across three time horizons for institutional-grade strategy.</p>
+      <div class="seg" id="horizonSeg">
+        <button type="button" data-h="short" class="on">Short<small>1–3 yrs</small></button>
+        <button type="button" data-h="medium">Medium<small>3–10 yrs</small></button>
+        <button type="button" data-h="long">Long<small>10+ yrs</small></button>
+      </div>
+      <textarea id="horizonGoal" placeholder="What do you want this money to do in this horizon?"></textarea>
+      <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn" id="investAdvise">Generate strategy</button>
+      </div>
+      <div class="ai-out" id="investOut"></div>
+    </div>
+
+    <div class="grid2">
+      <div class="card">
+        <h2>Holdings</h2>
+        <div class="list" id="holdList" style="margin-top:8px"></div>
+      </div>
+      <div class="card">
+        <h2>Add Holding</h2>
+        <form class="form" id="holdForm" style="margin-top:8px">
+          <div class="row">
+            <label class="f">Name<input id="hName" required maxlength="60" placeholder="Vanguard FTSE All-World"></label>
+            <label class="f">Ticker<input id="hTicker" maxlength="12" placeholder="VWCE"></label>
+          </div>
+          <label class="f">Type<select id="hType">
+            <option>ETF</option><option>Stock</option><option>Bond</option><option>Crypto</option><option>Cash</option><option>Other</option>
+          </select></label>
+          <div class="row">
+            <label class="f">Units<input id="hUnits" type="number" step="any" min="0" required inputmode="decimal"></label>
+            <label class="f">Avg cost / unit<input id="hCost" type="number" step="any" min="0" required inputmode="decimal"></label>
+          </div>
+          <label class="f">Current price / unit<input id="hPrice" type="number" step="any" min="0" required inputmode="decimal"></label>
+          <button class="btn" type="submit">Add holding</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div class="card">
+        <h2>Portfolio Analysis</h2>
+        <p class="sub">Allocation by asset type</p>
+        <div class="chart-box"><canvas id="allocChart"></canvas></div>
+        <div id="analysisNotes" class="note"></div>
+      </div>
+      <div class="card">
+        <h2>Academy</h2>
+        <p class="sub">Core ideas, in two minutes each</p>
+        <div id="academy"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- VISION -->
+  <section class="view" id="view-vision">
+    <div class="page-head">
+      <div class="eyebrow">Aspirations</div>
+      <h1><em>Vision</em></h1>
+      <p>What you're building towards</p>
+    </div>
+    <div class="card hero">
+      <div class="eyebrow">Progress Overview</div>
+      <div class="big" id="vSaved">€0</div>
+      <div class="month-label" id="vSavedSub">saved across 0 visions</div>
+      <div class="stats">
+        <div class="stat"><div class="label">Furthest Along</div><div class="val" id="vFurthest">—</div></div>
+        <div class="stat"><div class="label">Total Target</div><div class="val" id="vTarget">€0</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Visions</h2>
+      <div id="visionList"></div>
+    </div>
+    <div class="card" id="visionFormCard">
+      <h2>New Vision</h2>
+      <form class="form" id="visionForm" style="margin-top:8px">
+        <label class="f">Name<input id="vName" required maxlength="60" placeholder="A home by the sea"></label>
+        <div class="row">
+          <label class="f">Target<input id="vTargetIn" type="number" min="1" step="any" required inputmode="decimal"></label>
+          <label class="f">Saved so far<input id="vSavedIn" type="number" min="0" step="any" value="0" inputmode="decimal"></label>
+        </div>
+        <div class="row">
+          <label class="f">Target date<input id="vDate" type="date"></label>
+          <label class="f">Emoji<input id="vEmoji" maxlength="4" placeholder="🏡"></label>
+        </div>
+        <button class="btn" type="submit">Add vision</button>
+      </form>
+    </div>
+  </section>
+
+  <!-- HEALTH -->
+  <section class="view" id="view-health">
+    <div class="page-head">
+      <div class="eyebrow">Health</div>
+      <h1>Fitness</h1>
+      <p>Train, track, improve</p>
+    </div>
+    <div class="card hero">
+      <div class="eyebrow">This Week</div>
+      <div class="stats" style="grid-template-columns:repeat(3,1fr)">
+        <div class="stat"><div class="label">Sessions</div><div class="val" id="wSessions">0</div></div>
+        <div class="stat"><div class="label">Volume</div><div class="val" id="wVolume">—</div></div>
+        <div class="stat"><div class="label">Distance</div><div class="val" id="wDistance">—</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Week at a Glance</h2>
+      <div class="week" id="weekGrid" style="margin-top:12px"></div>
+    </div>
+    <div class="grid2">
+      <div class="card">
+        <h2>Recent Sessions</h2>
+        <div class="list" id="workoutList" style="margin-top:8px"></div>
+      </div>
+      <div class="card" id="workoutFormCard">
+        <h2>Log Workout</h2>
+        <form class="form" id="workoutForm" style="margin-top:8px">
+          <div class="row">
+            <label class="f">Type<select id="wType">
+              <option>Strength</option><option>Run</option><option>Cycle</option><option>Swim</option><option>HIIT</option><option>Yoga</option><option>Walk</option><option>Other</option>
+            </select></label>
+            <label class="f">Date<input id="wDate" type="date" required></label>
+          </div>
+          <div class="row">
+            <label class="f">Duration (min)<input id="wDur" type="number" min="1" step="1" required inputmode="numeric"></label>
+            <label class="f">Volume (kg)<input id="wVol" type="number" min="0" step="any" inputmode="decimal" placeholder="Strength"></label>
+          </div>
+          <label class="f">Distance (km)<input id="wDist" type="number" min="0" step="any" inputmode="decimal" placeholder="Cardio"></label>
+          <label class="f">Notes<input id="wNotes" maxlength="120" placeholder="Felt strong, PB on squat"></label>
+          <button class="btn" type="submit">Log workout</button>
+        </form>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Plan a Session</h2>
+      <p class="sub">Tell the coach what you have time and kit for.</p>
+      <textarea id="planInput" placeholder="45 min, dumbbells only, want to focus on legs."></textarea>
+      <div style="margin-top:10px"><button class="btn" id="planBtn">Plan it</button></div>
+      <div class="ai-out" id="planOut"></div>
+    </div>
+    <div class="grid2">
+      <div class="card">
+        <h2>Goals &amp; PBs</h2>
+        <div class="list" id="goalList" style="margin-top:8px"></div>
+      </div>
+      <div class="card">
+        <h2>New Goal / PB</h2>
+        <form class="form" id="goalForm" style="margin-top:8px">
+          <label class="f">Goal<input id="gName" required maxlength="60" placeholder="Squat"></label>
+          <div class="row">
+            <label class="f">Current<input id="gCur" type="number" step="any" required inputmode="decimal"></label>
+            <label class="f">Target<input id="gTgt" type="number" step="any" required inputmode="decimal"></label>
+          </div>
+          <label class="f">Unit<input id="gUnit" maxlength="10" placeholder="kg, km, min…"></label>
+          <button class="btn" type="submit">Add goal</button>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- ADVISOR -->
+  <section class="view" id="view-advisor">
+    <div class="page-head">
+      <div class="eyebrow">AI Advisor</div>
+      <h1>Advisor</h1>
+      <p>Context auto-loaded from your data</p>
+    </div>
+    <div class="card">
+      <div class="chips" id="chips">
+        <button class="chip" data-q="Give me a breakdown of my spending this month: where is it going, what stands out, and where could I cut?">Spending breakdown</button>
+        <button class="chip" data-q="Review my portfolio: allocation, concentration risk, performance and what I should consider changing.">Portfolio review</button>
+        <button class="chip" data-q="Check in on my visions and fitness goals. Am I on track? What should I adjust?">Goals check-in</button>
+        <button class="chip" data-q="Look at my recent workouts and give me fitness insights and a suggestion for next week.">Fitness insights</button>
+        <button class="chip" data-q="What should my top 3 financial priorities be this month, given all my data?">Monthly priorities</button>
+        <button class="chip" data-q="Compare my spending this month with last month by category. What changed and why might that be?">Month vs month</button>
+      </div>
+      <div class="chat" id="chat"></div>
+      <form class="chat-input" id="chatForm">
+        <textarea id="chatInput" placeholder="Ask anything about your money or training…" rows="1"></textarea>
+        <button class="btn" type="submit">Send</button>
+      </form>
+    </div>
+  </section>
+
+  <!-- SETTINGS -->
+  <section class="view" id="view-settings">
+    <div class="page-head">
+      <div class="eyebrow">Configure</div>
+      <h1>Settings</h1>
+      <p>Your app, your way</p>
+    </div>
+    <div class="card">
+      <div class="card-head"><h2>AI Advisor</h2><span class="pill" id="aiStatus">⚡ Not connected</span></div>
+      <p class="sub">Paste your Anthropic API key to activate advisors outside of Claude.ai. Inside claude.ai they work automatically — no key needed.</p>
+      <div class="form">
+        <label class="f">Anthropic API key<input id="apiKey" type="password" autocomplete="off" placeholder="sk-ant-…"></label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn" id="saveKey">Save key</button>
+          <button class="btn ghost" id="testKey">Test connection</button>
+          <button class="btn ghost" id="clearKey">Remove</button>
+        </div>
+      </div>
+      <div class="note">
+        <strong>Inside claude.ai:</strong> Advisors work automatically.<br>
+        <strong>On Netlify / deployed:</strong> Get a key at <a href="https://console.anthropic.com" target="_blank" rel="noopener">console.anthropic.com</a><br>
+        Your key is stored only on this device.
+      </div>
+    </div>
+    <div class="card">
+      <h2>Preferences</h2>
+      <div class="row" style="margin-top:10px">
+        <label class="f">Currency<select id="currencySel">
+          <option value="EUR">€ Euro</option><option value="GBP">£ Pound</option><option value="USD">$ Dollar</option><option value="CHF">CHF Franc</option><option value="JPY">¥ Yen</option>
+        </select></label>
+        <label class="f">Theme<select id="themeSel">
+          <option value="system">System</option><option value="light">Light</option><option value="dark">Dark</option>
+        </select></label>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Data</h2>
+      <p class="sub">Everything lives in this browser's storage. Export to back up or move devices.</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn ghost" id="exportBtn">Export JSON</button>
+        <label class="btn ghost" style="cursor:pointer">Import JSON<input type="file" id="importFile" accept="application/json" hidden></label>
+      </div>
+      <p class="sub" style="margin-top:16px">Reset all data to sample values. Cannot be undone.</p>
+      <button class="btn danger" id="resetBtn">Reset data</button>
+    </div>
+  </section>
+</main>
+
+<div class="fab" id="fab">
+  <div class="menu">
+    <button data-act="expense">💸 Log expense</button>
+    <button data-act="workout">🏋️ Log workout</button>
+    <button data-act="advisor">💬 Ask advisor</button>
+    <button data-act="vision">✦ Add vision</button>
+  </div>
+  <button class="main-fab" aria-label="Quick actions">+</button>
+</div>
+
+<nav class="tabs">
+  <div class="wrap">
+    <button data-view="home" class="on"><span class="ico">🏠</span>Home</button>
+    <button data-view="budget"><span class="ico">💶</span>Budget</button>
+    <button data-view="portfolio"><span class="ico">📈</span>Portfolio</button>
+    <button data-view="vision"><span class="ico">✦</span>Vision</button>
+    <button data-view="health"><span class="ico">🏋️</span>Health</button>
+    <button data-view="advisor"><span class="ico">💬</span>Advisor</button>
+    <button data-view="settings"><span class="ico">⚙️</span>Settings</button>
+  </div>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(() => {
+'use strict';
+
+/* ---------- Storage ---------- */
+const STORE_KEY = 'wealthr.v3';
+const KEY_KEY = 'wealthr.apiKey';
+const UI_KEY = 'wealthr.ui';
+
+const ls = {
+  get(k) { try { return localStorage.getItem(k); } catch { return null; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch {} },
+  del(k) { try { localStorage.removeItem(k); } catch {} },
+};
+
+const CATEGORIES = ['Housing', 'Groceries', 'Dining', 'Transport', 'Utilities', 'Shopping', 'Entertainment', 'Health', 'Travel', 'Other'];
+
+const iso = d => {
+  const z = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
+  return z.toISOString().slice(0, 10);
+};
+const daysAgo = n => { const d = new Date(); d.setDate(d.getDate() - n); return iso(d); };
+const monthsAgoDay = (m, day) => { const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - m); d.setDate(Math.min(day, 28)); return iso(d); };
+const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
+
+function sampleData() {
+  const tx = [];
+  const add = (desc, amount, cat, date) => tx.push({ id: uid(), desc, amount, cat, date });
+  // current month — keep dates within this month
+  const today = new Date().getDate();
+  const cur = d => monthsAgoDay(0, Math.min(d, today));
+  add('Rent', 1350, 'Housing', cur(1));
+  add('Supermarket', 86.40, 'Groceries', cur(3));
+  add('Metro pass', 49, 'Transport', cur(2));
+  add('Electricity', 72.15, 'Utilities', cur(5));
+  add('Dinner with friends', 64.50, 'Dining', cur(6));
+  add('Farmers market', 31.20, 'Groceries', cur(8));
+  add('Cinema', 24, 'Entertainment', cur(9));
+  add('Running shoes', 129.99, 'Shopping', cur(10));
+  add('Coffee & lunch', 18.70, 'Dining', cur(11));
+  add('Pharmacy', 14.35, 'Health', cur(12));
+  // previous months
+  const prev = [
+    ['Rent', 1350, 'Housing', 1], ['Supermarket', 312.6, 'Groceries', 9], ['Restaurants', 188.4, 'Dining', 15],
+    ['Metro pass', 49, 'Transport', 2], ['Utilities', 138.2, 'Utilities', 6], ['Clothes', 96, 'Shopping', 18],
+    ['Concert', 75, 'Entertainment', 21], ['Weekend trip', 240, 'Travel', 24],
+  ];
+  for (let m = 1; m <= 5; m++) {
+    prev.forEach(([d, a, c, day]) => add(d, Math.round(a * (0.8 + ((m * 37 + day) % 40) / 100) * 100) / 100, c, monthsAgoDay(m, day)));
+  }
+  return {
+    currency: 'EUR',
+    income: 4200,
+    investPerMonth: 600,
+    cash: 14500,
+    budgets: { Housing: 1400, Groceries: 380, Dining: 220, Transport: 90, Utilities: 160, Shopping: 200, Entertainment: 120, Health: 60, Travel: 250, Other: 100 },
+    transactions: tx,
+    holdings: [
+      { id: uid(), name: 'Vanguard FTSE All-World', ticker: 'VWCE', type: 'ETF', units: 85, cost: 98.2, price: 121.4 },
+      { id: uid(), name: 'iShares Core MSCI EM IMI', ticker: 'EIMI', type: 'ETF', units: 120, cost: 29.1, price: 31.7 },
+      { id: uid(), name: 'iShares Euro Govt Bond', ticker: 'IBGM', type: 'Bond', units: 40, cost: 152.3, price: 148.9 },
+      { id: uid(), name: 'ASML Holding', ticker: 'ASML', type: 'Stock', units: 4, cost: 610, price: 702.5 },
+      { id: uid(), name: 'Bitcoin', ticker: 'BTC', type: 'Crypto', units: 0.05, cost: 38000, price: 61200 },
+    ],
+    horizonGoals: { short: '', medium: '', long: '' },
+    visions: [
+      { id: uid(), name: 'House deposit', emoji: '🏡', target: 40000, saved: 16500, date: monthsAgoDay(-30, 1) },
+      { id: uid(), name: 'Japan for a month', emoji: '🗾', target: 6000, saved: 3900, date: monthsAgoDay(-10, 1) },
+      { id: uid(), name: 'Emergency fund', emoji: '🛟', target: 15000, saved: 12000, date: '' },
+    ],
+    workouts: [
+      { id: uid(), type: 'Strength', date: daysAgo(1), dur: 60, vol: 8200, dist: 0, notes: 'Lower body' },
+      { id: uid(), type: 'Run', date: daysAgo(2), dur: 34, vol: 0, dist: 6.2, notes: 'Easy pace' },
+      { id: uid(), type: 'Strength', date: daysAgo(4), dur: 55, vol: 7100, dist: 0, notes: 'Upper body' },
+      { id: uid(), type: 'Cycle', date: daysAgo(6), dur: 75, vol: 0, dist: 28, notes: '' },
+      { id: uid(), type: 'Run', date: daysAgo(9), dur: 48, vol: 0, dist: 8.5, notes: 'Tempo' },
+    ],
+    goals: [
+      { id: uid(), name: 'Squat', cur: 110, tgt: 140, unit: 'kg' },
+      { id: uid(), name: '10k time', cur: 52, tgt: 45, unit: 'min' },
+      { id: uid(), name: 'Weekly runs', cur: 2, tgt: 3, unit: 'runs' },
+    ],
+    chat: [],
+  };
+}
+
+let S;
+function load() {
+  const raw = ls.get(STORE_KEY);
+  if (raw) { try { S = Object.assign(sampleData(), JSON.parse(raw)); return; } catch {} }
+  S = sampleData();
+  save();
+}
+function save() { ls.set(STORE_KEY, JSON.stringify(S)); }
+
+/* ---------- Helpers ---------- */
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const num = v => { const n = parseFloat(v); return Number.isFinite(n) ? n : 0; };
+const fmt = (n, dp) => {
+  const digits = dp ?? (Math.abs(n) >= 1000 ? 0 : 2);
+  try { return new Intl.NumberFormat(undefined, { style: 'currency', currency: S.currency, minimumFractionDigits: digits, maximumFractionDigits: digits }).format(n); }
+  catch { return n.toFixed(digits); }
+};
+const fmt0 = n => fmt(n, 0);
+const pct = n => (n >= 0 ? '+' : '') + n.toFixed(1) + '%';
+const monthKey = d => d.slice(0, 7);
+const thisMonth = () => iso(new Date()).slice(0, 7);
+const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const palette = () => ['--c1', '--c2', '--c3', '--c4', '--c5', '--c6', '--c7', '--c8'].map(css);
+const catColor = cat => palette()[Math.max(0, CATEGORIES.indexOf(cat)) % 8];
+
+function toast(msg) {
+  const t = $('toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+/* Minimal, safe markdown: escape first, then format. */
+function md(text) {
+  const lines = esc(text).split('\n');
+  let html = '', inList = false;
+  const inline = s => s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/(^|[^*])\*([^*]+)\*/g, '$1<em>$2</em>').replace(/`([^`]+)`/g, '<code>$1</code>');
+  for (const raw of lines) {
+    const line = raw.trim();
+    const li = line.match(/^(?:[-*•]|\d+[.)])\s+(.*)/);
+    if (li) { if (!inList) { html += '<ul>'; inList = true; } html += `<li>${inline(li[1])}</li>`; continue; }
+    if (inList) { html += '</ul>'; inList = false; }
+    if (!line) continue;
+    const h = line.match(/^#{1,4}\s+(.*)/);
+    html += h ? `<h4>${inline(h[1])}</h4>` : `<p>${inline(line)}</p>`;
+  }
+  if (inList) html += '</ul>';
+  return html;
+}
+
+/* ---------- Derived numbers ---------- */
+function monthTx(mk = thisMonth()) { return S.transactions.filter(t => monthKey(t.date) === mk); }
+function spentByCat(mk) {
+  const m = {}; monthTx(mk).forEach(t => { m[t.cat] = (m[t.cat] || 0) + num(t.amount); }); return m;
+}
+function portfolio() {
+  let value = 0, invested = 0; const byType = {};
+  S.holdings.forEach(h => {
+    const v = num(h.units) * num(h.price), c = num(h.units) * num(h.cost);
+    value += v; invested += c; byType[h.type] = (byType[h.type] || 0) + v;
+  });
+  return { value, invested, gain: value - invested, ret: invested ? (value - invested) / invested * 100 : 0, byType };
+}
+function totals() {
+  const spent = monthTx().reduce((a, t) => a + num(t.amount), 0);
+  const budget = Object.values(S.budgets).reduce((a, b) => a + num(b), 0);
+  const p = portfolio();
+  return { spent, budget, budgetLeft: budget - spent, p, net: num(S.cash) + p.value };
+}
+function weekStart() { const d = new Date(); const day = (d.getDay() + 6) % 7; d.setDate(d.getDate() - day); return iso(d); }
+
+/* ---------- Charts ---------- */
+const charts = {};
+function drawChart(id, config) {
+  if (!window.Chart) return;
+  if (charts[id]) charts[id].destroy();
+  Chart.defaults.font.family = 'Inter, system-ui, sans-serif';
+  Chart.defaults.color = css('--muted');
+  charts[id] = new Chart($(id), config);
+}
+function doughnut(id, labels, data, colors, valueFmt = fmt) {
+  drawChart(id, {
+    type: 'doughnut',
+    data: { labels, datasets: [{ data, backgroundColor: colors, borderColor: css('--surface'), borderWidth: 2 }] },
+    options: {
+      maintainAspectRatio: false, cutout: '64%',
+      plugins: {
+        legend: { position: 'right', labels: { boxWidth: 10, boxHeight: 10, usePointStyle: true, color: css('--text') } },
+        tooltip: { callbacks: { label: c => ` ${c.label}: ${valueFmt(c.parsed)}` } },
+      },
+    },
+  });
+}
+
+/* ---------- Renderers ---------- */
+function renderHome() {
+  const t = totals();
+  $('netWorth').textContent = fmt0(t.net);
+  $('hBudgetLeft').textContent = fmt0(t.budgetLeft);
+  $('hBudgetLeft').className = 'val ' + (t.budgetLeft < 0 ? 'neg' : '');
+  $('hPortfolio').textContent = fmt0(t.p.value);
+  $('hSpent').textContent = fmt0(t.spent);
+  $('hInvested').textContent = fmt0(num(S.investPerMonth));
+  const by = spentByCat(thisMonth());
+  const cats = CATEGORIES.filter(c => by[c] > 0);
+  $('mixEmpty').hidden = cats.length > 0;
+  $('mixChart').parentElement.hidden = cats.length === 0;
+  if (cats.length) doughnut('mixChart', cats, cats.map(c => Math.round(by[c] * 100) / 100), cats.map(catColor));
+}
+
+function renderBudget() {
+  $('incomeBig').textContent = fmt0(num(S.income));
+  $('incomeInput').value = S.income;
+  $('investInput').value = S.investPerMonth;
+  $('cashInput').value = S.cash;
+  const by = spentByCat(thisMonth());
+  const t = totals();
+  $('budgetTotals').textContent = `${fmt0(t.spent)} of ${fmt0(t.budget)}`;
+  $('budgetRows').innerHTML = CATEGORIES.map(c => {
+    const b = num(S.budgets[c]), s = by[c] || 0, p = b ? Math.min(100, s / b * 100) : (s ? 100 : 0);
+    return `<div class="budget-row">
+      <div class="top"><span><span class="dot" style="display:inline-block;background:${catColor(c)};margin-right:6px"></span>${c}</span>
+      <span>${fmt0(s)} / <input type="number" min="0" step="10" data-cat="${c}" value="${b}" aria-label="${c} budget" inputmode="decimal"></span></div>
+      <div class="bar ${s > b ? 'over' : ''}"><i style="width:${p}%;${s > b ? '' : `background:${catColor(c)}`}"></i></div>
+    </div>`;
+  }).join('');
+
+  const months = [...new Set(S.transactions.map(t => monthKey(t.date)))].sort().reverse();
+  const sel = $('txFilter'); const prev = sel.value || thisMonth();
+  sel.innerHTML = ['all', ...months].map(m => `<option value="${m}">${m === 'all' ? 'All months' : monthName(m)}</option>`).join('');
+  sel.value = [...sel.options].some(o => o.value === prev) ? prev : (months[0] || 'all');
+  renderTxList();
+
+  const labels = [], data = [];
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - i);
+    const mk = iso(d).slice(0, 7);
+    labels.push(d.toLocaleDateString(undefined, { month: 'short' }));
+    data.push(Math.round(monthTx(mk).reduce((a, t) => a + num(t.amount), 0)));
+  }
+  drawChart('mvmChart', {
+    type: 'bar',
+    data: { labels, datasets: [
+      { label: 'Spent', data, backgroundColor: data.map((_, i) => i === 5 ? css('--c1') : css('--c2')), borderRadius: 6, maxBarThickness: 36 },
+      { label: 'Budget', type: 'line', data: labels.map(() => t.budget), borderColor: css('--muted'), borderDash: [4, 4], pointRadius: 0, borderWidth: 1.5 },
+    ] },
+    options: {
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ` ${c.dataset.label}: ${fmt0(c.parsed.y)}` } } },
+      scales: { x: { grid: { display: false } }, y: { grid: { color: css('--border') }, ticks: { callback: v => fmt0(v) } } },
+    },
+  });
+}
+function monthName(mk) { const [y, m] = mk.split('-'); return new Date(+y, +m - 1, 1).toLocaleDateString(undefined, { month: 'long', year: 'numeric' }); }
+function renderTxList() {
+  const f = $('txFilter').value;
+  const list = S.transactions.filter(t => f === 'all' || monthKey(t.date) === f).sort((a, b) => b.date.localeCompare(a.date));
+  $('txList').innerHTML = list.length ? list.map(t => `<div class="item">
+      <span class="dot" style="background:${catColor(t.cat)}"></span>
+      <div class="main"><div class="title">${esc(t.desc)}</div><div class="meta">${esc(t.cat)} · ${new Date(t.date + 'T00:00').toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}</div></div>
+      <div class="amt">${fmt(num(t.amount))}</div>
+      <button class="icon-btn" data-del-tx="${t.id}" aria-label="Delete">×</button>
+    </div>`).join('') : '<div class="empty">No transactions.</div>';
+}
+
+let horizon = 'short';
+function renderPortfolio() {
+  const p = portfolio();
+  $('pValue').textContent = fmt0(p.value);
+  $('pInvested').textContent = fmt0(p.invested);
+  $('pGain').textContent = (p.gain >= 0 ? '+' : '') + fmt0(p.gain);
+  $('pGain').className = 'val ' + (p.gain >= 0 ? 'pos' : 'neg');
+  $('pReturn').textContent = pct(p.ret);
+  $('pReturn').className = 'val ' + (p.ret >= 0 ? 'pos' : 'neg');
+  $('pCount').textContent = S.holdings.length;
+  $('horizonGoal').value = S.horizonGoals[horizon] || '';
+
+  $('holdList').innerHTML = S.holdings.length ? S.holdings.map(h => {
+    const v = num(h.units) * num(h.price), c = num(h.units) * num(h.cost), r = c ? (v - c) / c * 100 : 0;
+    return `<div class="item">
+      <div class="main"><div class="title">${esc(h.name)}</div><div class="meta">${esc(h.ticker || h.type)} · ${num(h.units)} @ ${fmt(num(h.price))}</div></div>
+      <div style="text-align:right"><div class="amt">${fmt0(v)}</div><div class="meta ${r >= 0 ? 'pos' : 'neg'}">${pct(r)}</div></div>
+      <button class="icon-btn" data-edit-price="${h.id}" aria-label="Update price" title="Update price">✎</button>
+      <button class="icon-btn" data-del-hold="${h.id}" aria-label="Delete">×</button>
+    </div>`;
+  }).join('') : '<div class="empty">No holdings yet.</div>';
+
+  const types = Object.keys(p.byType).filter(k => p.byType[k] > 0);
+  const pal = palette();
+  if (types.length) doughnut('allocChart', types, types.map(k => Math.round(p.byType[k])), types.map((_, i) => pal[i % 8]), fmt0);
+  else if (charts.allocChart) { charts.allocChart.destroy(); delete charts.allocChart; }
+
+  const notes = [];
+  if (p.value) {
+    const top = [...S.holdings].map(h => ({ h, v: num(h.units) * num(h.price) })).sort((a, b) => b.v - a.v)[0];
+    const topShare = top.v / p.value * 100;
+    notes.push(`Largest position: <strong>${esc(top.h.ticker || top.h.name)}</strong> at ${topShare.toFixed(0)}% of the portfolio${topShare > 40 ? ' — a concentration worth watching.' : '.'}`);
+    const eq = ((p.byType.ETF || 0) + (p.byType.Stock || 0)) / p.value * 100;
+    notes.push(`Equity exposure: ${eq.toFixed(0)}%. Bonds: ${((p.byType.Bond || 0) / p.value * 100).toFixed(0)}%. Crypto: ${((p.byType.Crypto || 0) / p.value * 100).toFixed(0)}%.`);
+    const yrs = num(S.investPerMonth) > 0 ? `At ${fmt0(num(S.investPerMonth))}/mo and 6% a year, you'd have roughly <strong>${fmt0(fv(p.value, num(S.investPerMonth), 0.06, 10))}</strong> in 10 years.` : '';
+    if (yrs) notes.push(yrs);
+  } else notes.push('Add holdings to see an analysis.');
+  $('analysisNotes').innerHTML = notes.map(n => `<div>${n}</div>`).join('');
+}
+function fv(pv, pmt, r, years) { const i = r / 12, n = years * 12; return pv * Math.pow(1 + i, n) + pmt * ((Math.pow(1 + i, n) - 1) / i); }
+
+const LESSONS = [
+  ['Compounding', 'Returns earn returns. €500/month at 7% grows to about €260k in 20 years — roughly €140k of that is growth, not contributions. Time in the market matters more than timing it.'],
+  ['Diversification', 'Spreading money across thousands of companies, regions and asset types means no single failure sinks you. A global index ETF is diversification in one purchase.'],
+  ['Asset allocation', 'The split between stocks, bonds and cash drives most of your risk and return. Longer horizons can carry more equities; money needed in under 3 years belongs in safer assets.'],
+  ['Fees', 'A 1% annual fee can consume a quarter of your final pot over 30 years. Look at the TER/OCF and favour low-cost index funds.'],
+  ['Rebalancing', 'Once or twice a year, bring your allocation back to target. It enforces "buy low, sell high" without having to predict anything.'],
+  ['Emergency fund', 'Hold 3–6 months of essential spending in cash before investing heavily, so a surprise bill never forces you to sell at a bad time.'],
+];
+function renderAcademy() {
+  $('academy').innerHTML = LESSONS.map(([t, b]) => `<details class="lesson"><summary>${t}</summary><p>${b}</p></details>`).join('');
+}
+
+function renderVision() {
+  const saved = S.visions.reduce((a, v) => a + num(v.saved), 0);
+  const target = S.visions.reduce((a, v) => a + num(v.target), 0);
+  $('vSaved').textContent = fmt0(saved);
+  $('vSavedSub').textContent = `saved across ${S.visions.length} vision${S.visions.length === 1 ? '' : 's'}`;
+  $('vTarget').textContent = fmt0(target);
+  const best = [...S.visions].sort((a, b) => num(b.saved) / num(b.target) - num(a.saved) / num(a.target))[0];
+  $('vFurthest').textContent = best ? `${best.emoji || ''} ${best.name} · ${Math.round(num(best.saved) / num(best.target) * 100)}%`.trim() : '—';
+
+  $('visionList').innerHTML = S.visions.length ? S.visions.map(v => {
+    const p = Math.min(100, num(v.saved) / num(v.target) * 100 || 0);
+    let pace = '';
+    if (v.date) {
+      const months = Math.max(1, Math.round((new Date(v.date) - new Date()) / (30.44 * 864e5)));
+      const need = Math.max(0, num(v.target) - num(v.saved));
+      pace = need > 0 ? `${fmt0(need / months)}/mo to hit ${new Date(v.date).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}` : 'Fully funded 🎉';
+    }
+    return `<div class="vision">
+      <div class="head"><div class="name">${esc(v.emoji || '✦')} ${esc(v.name)}</div><button class="icon-btn" data-del-vision="${v.id}" aria-label="Delete">×</button></div>
+      <div class="nums"><span>${fmt0(num(v.saved))} of ${fmt0(num(v.target))} · ${p.toFixed(0)}%</span><span>${esc(pace)}</span></div>
+      <div class="bar"><i style="width:${p}%;background:var(--gold)"></i></div>
+      <div class="actions"><input type="number" step="any" placeholder="Amount" data-contrib-in="${v.id}" inputmode="decimal"><button class="btn sm ghost" data-contrib="${v.id}">Add to it</button></div>
+    </div>`;
+  }).join('') : '<div class="empty">No visions yet — add the first thing you\'re building towards.</div>';
+}
+
+function renderHealth() {
+  const ws = weekStart();
+  const week = S.workouts.filter(w => w.date >= ws);
+  $('wSessions').textContent = week.length;
+  const vol = week.reduce((a, w) => a + num(w.vol), 0), dist = week.reduce((a, w) => a + num(w.dist), 0);
+  $('wVolume').textContent = vol ? `${Math.round(vol).toLocaleString()} kg` : '—';
+  $('wDistance').textContent = dist ? `${dist.toFixed(1)} km` : '—';
+
+  const today = iso(new Date());
+  const start = new Date(ws + 'T00:00');
+  let g = '';
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(start); d.setDate(start.getDate() + i);
+    const k = iso(d), n = S.workouts.filter(w => w.date === k).length;
+    g += `<div class="d ${n ? 'on' : ''} ${k === today ? 'today' : ''}">${d.toLocaleDateString(undefined, { weekday: 'narrow' })}<b>${n ? '●' : '·'}</b></div>`;
+  }
+  $('weekGrid').innerHTML = g;
+
+  const recent = [...S.workouts].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 12);
+  $('workoutList').innerHTML = recent.length ? recent.map(w => {
+    const bits = [`${num(w.dur)} min`]; if (num(w.vol)) bits.push(`${Math.round(num(w.vol)).toLocaleString()} kg`); if (num(w.dist)) bits.push(`${num(w.dist)} km`);
+    return `<div class="item">
+      <div class="main"><div class="title">${esc(w.type)}${w.notes ? ' · ' + esc(w.notes) : ''}</div><div class="meta">${new Date(w.date + 'T00:00').toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' })} · ${bits.join(' · ')}</div></div>
+      <button class="icon-btn" data-del-workout="${w.id}" aria-label="Delete">×</button>
+    </div>`;
+  }).join('') : '<div class="empty">No sessions logged yet.</div>';
+
+  $('goalList').innerHTML = S.goals.length ? S.goals.map(g => {
+    const lowerBetter = num(g.tgt) < num(g.cur);
+    const p = lowerBetter ? Math.min(100, num(g.tgt) / num(g.cur) * 100) : Math.min(100, num(g.cur) / num(g.tgt) * 100 || 0);
+    return `<div class="item" style="display:block">
+      <div style="display:flex;gap:8px;align-items:center">
+        <div class="main"><div class="title">${esc(g.name)}</div><div class="meta">${num(g.cur)} → ${num(g.tgt)} ${esc(g.unit)}</div></div>
+        <button class="btn sm ghost" data-goal-upd="${g.id}">Update</button>
+        <button class="icon-btn" data-del-goal="${g.id}" aria-label="Delete">×</button>
+      </div>
+      <div class="bar" style="margin-top:6px"><i style="width:${p}%"></i></div>
+    </div>`;
+  }).join('') : '<div class="empty">No goals yet.</div>';
+}
+
+function renderChat() {
+  const box = $('chat');
+  box.innerHTML = S.chat.length ? S.chat.map(m => `<div class="msg ${m.role === 'user' ? 'user' : 'bot'}">${m.role === 'user' ? esc(m.content) : md(m.content)}</div>`).join('')
+    : '<div class="empty">Pick a prompt above or ask your own question. Your budget, portfolio, visions and training are sent as context.</div>';
+  box.scrollTop = box.scrollHeight;
+}
+
+function renderSettings() {
+  const key = ls.get(KEY_KEY);
+  const pill = $('aiStatus');
+  if (key) { pill.textContent = '✓ Key saved'; pill.className = 'pill ok'; }
+  else if (inClaude()) { pill.textContent = '✓ claude.ai'; pill.className = 'pill ok'; }
+  else { pill.textContent = '⚡ Not connected'; pill.className = 'pill'; }
+  $('apiKey').value = key ? '••••••••' + key.slice(-4) : '';
+  $('currencySel').value = S.currency;
+  $('themeSel').value = getUI().theme || 'system';
+}
+
+function renderAll() {
+  $('monthLabel').textContent = new Date().toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+  renderHome(); renderBudget(); renderPortfolio(); renderVision(); renderHealth(); renderChat(); renderSettings();
+}
+
+/* ---------- AI ---------- */
+function inClaude() { return !!(window.claude && typeof window.claude.complete === 'function'); }
+
+function contextBlob() {
+  const t = totals(); const mk = thisMonth();
+  const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - 1); const lmk = iso(d).slice(0, 7);
+  const cur = spentByCat(mk), last = spentByCat(lmk);
+  const r = n => Math.round(n * 100) / 100;
+  return JSON.stringify({
+    today: iso(new Date()), currency: S.currency,
+    monthlyIncome: num(S.income), investPerMonth: num(S.investPerMonth), cashSavings: num(S.cash),
+    netWorth: r(t.net),
+    budgetsByCategory: S.budgets,
+    spentThisMonthByCategory: Object.fromEntries(Object.entries(cur).map(([k, v]) => [k, r(v)])),
+    spentLastMonthByCategory: Object.fromEntries(Object.entries(last).map(([k, v]) => [k, r(v)])),
+    recentTransactions: [...S.transactions].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 25).map(x => ({ date: x.date, desc: x.desc, amount: num(x.amount), cat: x.cat })),
+    portfolio: { value: r(t.p.value), invested: r(t.p.invested), returnPct: r(t.p.ret), allocationByType: Object.fromEntries(Object.entries(t.p.byType).map(([k, v]) => [k, r(v)])),
+      holdings: S.holdings.map(h => ({ name: h.name, ticker: h.ticker, type: h.type, units: num(h.units), avgCost: num(h.cost), price: num(h.price) })) },
+    investmentGoals: S.horizonGoals,
+    visions: S.visions.map(v => ({ name: v.name, target: num(v.target), saved: num(v.saved), targetDate: v.date || null })),
+    workoutsLast30Days: S.workouts.filter(w => w.date >= daysAgo(30)).map(w => ({ date: w.date, type: w.type, minutes: num(w.dur), volumeKg: num(w.vol), distanceKm: num(w.dist), notes: w.notes })),
+    fitnessGoals: S.goals.map(g => ({ name: g.name, current: num(g.cur), target: num(g.tgt), unit: g.unit })),
+  });
+}
+
+const SYSTEM = `You are Wealthr's advisor: a warm, direct personal finance and fitness coach inside a personal tracking app.
+Ground every recommendation in the user's actual numbers, which are provided as JSON. Quote specific figures and use their currency.
+Be concise and practical: short paragraphs, bullet points for actions, at most ~250 words unless a plan genuinely needs more.
+Use simple markdown only (bold, bullet lists, short headings). You are not a regulated financial adviser; for investment questions give educational, evidence-based guidance (diversification, costs, time horizon, risk) rather than tips on individual securities.`;
+
+async function askAI(messages) {
+  const key = ls.get(KEY_KEY);
+  if (!key && inClaude()) {
+    const transcript = messages.map(m => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`).join('\n\n');
+    return await window.claude.complete(`${SYSTEM}\n\n${transcript}\n\nAssistant:`);
+  }
+  if (!key) throw new Error('No API key. Add your Anthropic API key in Settings to use the advisor here.');
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      'x-api-key': key,
+      'anthropic-version': '2023-06-01',
+      'anthropic-beta': 'server-side-fallback-2026-07-01',
+      'anthropic-dangerous-direct-browser-access': 'true',
+    },
+    body: JSON.stringify({
+      model: 'claude-opus-5-5',
+      max_tokens: 16000,
+      thinking: { type: 'adaptive' },
+      output_config: { effort: 'medium' },
+      fallbacks: 'default',
+      system: SYSTEM,
+      messages,
+    }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const msg = data?.error?.message || `HTTP ${res.status}`;
+    if (res.status === 401) throw new Error('Invalid API key. Check it in Settings.');
+    throw new Error(msg);
+  }
+  if (data.stop_reason === 'refusal') throw new Error('The advisor declined to answer that request.');
+  const text = (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('\n').trim();
+  if (!text) throw new Error('Empty response from the advisor.');
+  return text;
+}
+
+async function runAdvisor(outEl, btn, prompt) {
+  outEl.className = 'ai-out show'; outEl.innerHTML = '<span class="loading">Thinking through your numbers…</span>';
+  btn.disabled = true;
+  try {
+    const text = await askAI([{ role: 'user', content: `My data:\n${contextBlob()}\n\n${prompt}` }]);
+    outEl.innerHTML = md(text);
+  } catch (e) {
+    outEl.className = 'ai-out show err'; outEl.textContent = e.message || String(e);
+  } finally { btn.disabled = false; }
+}
+
+async function sendChat(q) {
+  q = q.trim(); if (!q) return;
+  S.chat.push({ role: 'user', content: q }); save(); renderChat();
+  const box = $('chat');
+  box.insertAdjacentHTML('beforeend', '<div class="msg bot loading" id="typing">Thinking…</div>'); box.scrollTop = box.scrollHeight;
+  const history = S.chat.slice(-12).map((m, i, arr) => ({
+    role: m.role,
+    content: i === arr.length - 1 ? `Current data (auto-loaded):\n${contextBlob()}\n\n${m.content}` : m.content,
+  }));
+  while (history.length && history[0].role !== 'user') history.shift();
+  try { S.chat.push({ role: 'assistant', content: await askAI(history) }); }
+  catch (e) { S.chat.push({ role: 'assistant', content: `⚠️ ${e.message || e}` }); }
+  if (S.chat.length > 60) S.chat = S.chat.slice(-60);
+  save(); renderChat();
+}
+
+/* ---------- UI prefs ---------- */
+function getUI() { try { return JSON.parse(ls.get(UI_KEY) || '{}'); } catch { return {}; } }
+function setUI(p) { ls.set(UI_KEY, JSON.stringify(Object.assign(getUI(), p))); }
+function applyTheme() {
+  const t = getUI().theme;
+  if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme;
+}
+
+/* ---------- Navigation ---------- */
+function show(view) {
+  document.querySelectorAll('.view').forEach(v => v.classList.toggle('active', v.id === 'view-' + view));
+  document.querySelectorAll('nav.tabs button').forEach(b => b.classList.toggle('on', b.dataset.view === view));
+  setUI({ view });
+  window.scrollTo({ top: 0 });
+  // Charts drawn while their section was hidden have zero size; redraw now it's visible.
+  if (view === 'home') renderHome();
+  if (view === 'budget') renderBudget();
+  if (view === 'portfolio') renderPortfolio();
+}
+
+/* ---------- Events ---------- */
+function bind() {
+  document.querySelectorAll('nav.tabs button').forEach(b => b.addEventListener('click', () => show(b.dataset.view)));
+
+  // Budget inputs
+  const bindNum = (id, key) => $(id).addEventListener('change', e => { S[key] = num(e.target.value); save(); renderAll(); });
+  bindNum('incomeInput', 'income'); bindNum('investInput', 'investPerMonth'); bindNum('cashInput', 'cash');
+  $('budgetRows').addEventListener('change', e => {
+    const c = e.target.dataset.cat; if (!c) return;
+    S.budgets[c] = num(e.target.value); save(); renderAll();
+  });
+
+  $('txCat').innerHTML = CATEGORIES.map(c => `<option>${c}</option>`).join('');
+  $('txDate').value = iso(new Date());
+  $('txForm').addEventListener('submit', e => {
+    e.preventDefault();
+    S.transactions.push({ id: uid(), desc: $('txDesc').value.trim(), amount: num($('txAmt').value), cat: $('txCat').value, date: $('txDate').value });
+    save(); e.target.reset(); $('txDate').value = iso(new Date()); renderAll(); toast('Transaction added');
+  });
+  $('txFilter').addEventListener('change', renderTxList);
+
+  $('budgetAdvise').addEventListener('click', e => {
+    const goals = $('budgetGoals').value.trim() || 'Help me build a sensible monthly plan.';
+    runAdvisor($('budgetOut'), e.currentTarget, `My goals: ${goals}\n\nBuild a personalised monthly budget plan: recommended amounts per category, how much to save/invest, and the 3 concrete changes that matter most.`);
+  });
+
+  // Portfolio
+  $('horizonSeg').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    S.horizonGoals[horizon] = $('horizonGoal').value; save();
+    horizon = b.dataset.h;
+    document.querySelectorAll('#horizonSeg button').forEach(x => x.classList.toggle('on', x === b));
+    $('horizonGoal').value = S.horizonGoals[horizon] || '';
+  });
+  $('horizonGoal').addEventListener('input', e => { S.horizonGoals[horizon] = e.target.value; save(); });
+  $('investAdvise').addEventListener('click', e => {
+    const g = S.horizonGoals;
+    runAdvisor($('investOut'), e.currentTarget,
+      `My goals by horizon:\n- Short (1–3 yrs): ${g.short || 'not set'}\n- Medium (3–10 yrs): ${g.medium || 'not set'}\n- Long (10+ yrs): ${g.long || 'not set'}\n\nGive me an investment strategy for each horizon I've set: target allocation, how my current holdings map onto it, monthly contribution split, and key risks. Focus most on the ${horizon} horizon.`);
+  });
+  $('holdForm').addEventListener('submit', e => {
+    e.preventDefault();
+    S.holdings.push({ id: uid(), name: $('hName').value.trim(), ticker: $('hTicker').value.trim().toUpperCase(), type: $('hType').value, units: num($('hUnits').value), cost: num($('hCost').value), price: num($('hPrice').value) });
+    save(); e.target.reset(); renderAll(); toast('Holding added');
+  });
+
+  // Vision
+  $('visionForm').addEventListener('submit', e => {
+    e.preventDefault();
+    S.visions.push({ id: uid(), name: $('vName').value.trim(), emoji: $('vEmoji').value.trim(), target: num($('vTargetIn').value), saved: num($('vSavedIn').value), date: $('vDate').value });
+    save(); e.target.reset(); $('vSavedIn').value = 0; renderAll(); toast('Vision added');
+  });
+
+  // Health
+  $('wDate').value = iso(new Date());
+  $('workoutForm').addEventListener('submit', e => {
+    e.preventDefault();
+    S.workouts.push({ id: uid(), type: $('wType').value, date: $('wDate').value, dur: num($('wDur').value), vol: num($('wVol').value), dist: num($('wDist').value), notes: $('wNotes').value.trim() });
+    save(); e.target.reset(); $('wDate').value = iso(new Date()); renderAll(); toast('Workout logged');
+  });
+  $('goalForm').addEventListener('submit', e => {
+    e.preventDefault();
+    S.goals.push({ id: uid(), name: $('gName').value.trim(), cur: num($('gCur').value), tgt: num($('gTgt').value), unit: $('gUnit').value.trim() });
+    save(); e.target.reset(); renderAll(); toast('Goal added');
+  });
+  $('planBtn').addEventListener('click', e => {
+    const ask = $('planInput').value.trim() || 'Plan my next session.';
+    runAdvisor($('planOut'), e.currentTarget, `Plan a single training session for me. Constraints: ${ask}\nUse my recent workouts and goals to pick the focus. Give a warm-up, main block (exercises, sets × reps or intervals, target loads/paces) and cool-down.`);
+  });
+
+  // Delegated list actions
+  document.addEventListener('click', e => {
+    const t = e.target.closest('[data-del-tx],[data-del-hold],[data-edit-price],[data-del-vision],[data-contrib],[data-del-workout],[data-del-goal],[data-goal-upd]');
+    if (!t) return;
+    const d = t.dataset;
+    const rm = (arr, id) => arr.filter(x => x.id !== id);
+    if (d.delTx) S.transactions = rm(S.transactions, d.delTx);
+    else if (d.delHold) { if (!confirm('Remove this holding?')) return; S.holdings = rm(S.holdings, d.delHold); }
+    else if (d.editPrice) {
+      const h = S.holdings.find(x => x.id === d.editPrice); if (!h) return;
+      const v = prompt(`Current price per unit for ${h.ticker || h.name}`, h.price); if (v === null) return;
+      if (!Number.isFinite(parseFloat(v))) return toast('Enter a number');
+      h.price = num(v);
+    }
+    else if (d.delVision) { if (!confirm('Delete this vision?')) return; S.visions = rm(S.visions, d.delVision); }
+    else if (d.contrib) {
+      const inp = document.querySelector(`[data-contrib-in="${d.contrib}"]`), amt = num(inp && inp.value);
+      if (!amt) return toast('Enter an amount');
+      const v = S.visions.find(x => x.id === d.contrib); if (v) v.saved = Math.max(0, num(v.saved) + amt);
+      toast(amt > 0 ? `Added ${fmt0(amt)}` : `Withdrew ${fmt0(-amt)}`);
+    }
+    else if (d.delWorkout) S.workouts = rm(S.workouts, d.delWorkout);
+    else if (d.delGoal) S.goals = rm(S.goals, d.delGoal);
+    else if (d.goalUpd) {
+      const g = S.goals.find(x => x.id === d.goalUpd); if (!g) return;
+      const v = prompt(`New current value for ${g.name} (${g.unit || ''})`, g.cur); if (v === null) return;
+      if (!Number.isFinite(parseFloat(v))) return toast('Enter a number');
+      g.cur = num(v);
+    }
+    save(); renderAll();
+  });
+
+  // Advisor
+  $('chips').addEventListener('click', e => { const c = e.target.closest('.chip'); if (c) sendChat(c.dataset.q); });
+  $('chatForm').addEventListener('submit', e => { e.preventDefault(); const v = $('chatInput').value; $('chatInput').value = ''; sendChat(v); });
+  $('chatInput').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); $('chatForm').requestSubmit(); } });
+
+  // Settings
+  $('apiKey').addEventListener('focus', e => { if (e.target.value.startsWith('••')) e.target.value = ''; });
+  $('saveKey').addEventListener('click', () => {
+    const v = $('apiKey').value.trim();
+    if (!v || v.startsWith('••')) return toast('Paste a key first');
+    if (!v.startsWith('sk-ant-')) return toast('That doesn\'t look like an Anthropic key');
+    ls.set(KEY_KEY, v); renderSettings(); toast('Key saved on this device');
+  });
+  $('clearKey').addEventListener('click', () => { ls.del(KEY_KEY); renderSettings(); toast('Key removed'); });
+  $('testKey').addEventListener('click', async e => {
+    const btn = e.currentTarget; btn.disabled = true; btn.textContent = 'Testing…';
+    try { await askAI([{ role: 'user', content: 'Reply with just the word: connected' }]); toast('✓ Advisor connected'); }
+    catch (err) { toast(err.message || 'Connection failed'); }
+    finally { btn.disabled = false; btn.textContent = 'Test connection'; }
+  });
+  $('currencySel').addEventListener('change', e => { S.currency = e.target.value; save(); renderAll(); });
+  $('themeSel').addEventListener('change', e => { setUI({ theme: e.target.value }); applyTheme(); renderAll(); });
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', () => renderAll());
+  $('resetBtn').addEventListener('click', () => {
+    if (!confirm('Reset all data to sample values? This cannot be undone.')) return;
+    S = sampleData(); save(); renderAll(); toast('Data reset');
+  });
+  $('exportBtn').addEventListener('click', () => {
+    const blob = new Blob([JSON.stringify(S, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `wealthr-${iso(new Date())}.json`;
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  });
+  $('importFile').addEventListener('change', async e => {
+    const f = e.target.files[0]; if (!f) return;
+    try {
+      const data = JSON.parse(await f.text());
+      if (!data || typeof data !== 'object' || !Array.isArray(data.transactions)) throw new Error('bad');
+      S = Object.assign(sampleData(), data); save(); renderAll(); toast('Data imported');
+    } catch { toast('That file isn\'t a Wealthr export'); }
+    e.target.value = '';
+  });
+
+  // FAB
+  const fab = $('fab');
+  fab.querySelector('.main-fab').addEventListener('click', () => fab.classList.toggle('open'));
+  fab.querySelector('.menu').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    fab.classList.remove('open');
+    const go = (view, el) => { show(view); setTimeout(() => { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); el.querySelector('input,textarea')?.focus({ preventScroll: true }); }, 50); };
+    if (b.dataset.act === 'expense') go('budget', $('txForm').closest('.card'));
+    if (b.dataset.act === 'workout') go('health', $('workoutFormCard'));
+    if (b.dataset.act === 'vision') go('vision', $('visionFormCard'));
+    if (b.dataset.act === 'advisor') { show('advisor'); $('chatInput').focus(); }
+  });
+  document.addEventListener('click', e => { if (!fab.contains(e.target)) fab.classList.remove('open'); });
+
+  // iOS install banner
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const standalone = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
+  if (isIOS && !standalone && !getUI().bannerDismissed) $('installBanner').classList.add('show');
+  $('installClose').addEventListener('click', () => { $('installBanner').classList.remove('show'); setUI({ bannerDismissed: true }); });
+}
+
+/* ---------- Boot ---------- */
+applyTheme();
+load();
+renderAcademy();
+bind();
+renderAll();
+const startView = getUI().view;
+if (startView && $('view-' + startView)) show(startView);
+if (!window.Chart) window.addEventListener('load', () => window.Chart && renderAll());
+})();
+</script>
+</body>
+</html>
