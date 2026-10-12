@@ -184,6 +184,34 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
 .budget-row .top { display: flex; justify-content: space-between; align-items: center; font-size: 14px; gap: 8px; font-weight: 500; }
 .budget-row .top input { width: 96px; padding: 5px 8px; font-size: 14px; text-align: right; border-radius: 9px; }
 
+/* Monthly plan */
+.flow { display: flex; height: 14px; border-radius: 99px; overflow: hidden; background: var(--surface-2); margin: 6px 0 10px; }
+.flow i { display: block; height: 100%; transition: width .4s ease; }
+.flow i + i { box-shadow: -2px 0 0 var(--surface); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12px; color: var(--muted); font-weight: 600; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend .sw { width: 9px; height: 9px; border-radius: 3px; }
+.plan-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 14px 0 6px; }
+.plan-stats .stat .val { font-size: 16px; }
+.plan-sec { margin-top: 16px; }
+.plan-sec h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-bottom: 4px; }
+.alloc { display: grid; grid-template-columns: 38px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.alloc:last-child { border-bottom: 0; }
+.alloc .emoji { width: 38px; height: 38px; border-radius: 12px; background: var(--surface-2); display: grid; place-items: center; font-size: 18px; }
+.alloc .name { font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.alloc .meta { font-size: 12px; color: var(--muted); }
+.alloc .ctl { display: flex; align-items: center; gap: 6px; }
+.alloc.v { grid-template-columns: 38px minmax(0, 1fr); }
+.alloc.v .ctl { grid-column: 2; justify-content: space-between; }
+.alloc .ctl input { width: 104px; padding: 7px 8px; font-size: 14px; text-align: right; border-radius: 10px; }
+.mini-seg { display: inline-flex; background: var(--surface-2); border-radius: 9px; padding: 2px; }
+.mini-seg button { border: 0; background: none; padding: 4px 8px; border-radius: 7px; font-size: 11px; font-weight: 700; color: var(--muted); cursor: pointer; }
+.mini-seg button.on { background: var(--surface); color: var(--accent); box-shadow: var(--shadow); }
+.ontrack { color: var(--pos); font-weight: 700; } .behind { color: var(--warn); font-weight: 700; }
+.unalloc { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 14px; background: var(--surface-2); margin-top: 10px; font-size: 14px; flex-wrap: wrap; }
+.unalloc strong { font-size: 16px; }
+.btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+
 /* Segmented */
 .seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; background: var(--surface-2); padding: 4px; border-radius: 14px; margin-bottom: 12px; }
 .seg button { border: 0; background: transparent; padding: 8px 4px; border-radius: 10px; cursor: pointer; font-weight: 700; font-size: 14px; line-height: 1.2; color: var(--muted); }
@@ -372,9 +400,41 @@ nav.tabs button.on svg { stroke-width: 2.2; }
       <div class="big" id="incomeBig">€0</div>
       <div class="row" style="margin-top:14px">
         <label class="f">Income / month<input type="text" id="incomeInput" inputmode="decimal" autocomplete="off" data-money><span class="hint"></span></label>
-        <label class="f">Invested / month<input type="text" id="investInput" inputmode="decimal" autocomplete="off" data-money><span class="hint"></span></label>
+        <label class="f">Cash &amp; savings balance<input type="text" id="cashInput" inputmode="decimal" autocomplete="off" data-money><span class="hint"></span></label>
       </div>
-      <label class="f" style="margin-top:10px">Cash &amp; savings balance<input type="text" id="cashInput" inputmode="decimal" autocomplete="off" data-money><span class="hint"></span></label>
+    </div>
+
+    <div class="card" id="planCard">
+      <div class="card-head" style="margin-bottom:2px"><h2>Monthly Plan</h2><span class="pill" id="saveRate"></span></div>
+      <p class="sub">Pay yourself first: decide what goes to savings and investments. What's left is yours to allocate.</p>
+      <div class="flow" id="planFlow"></div>
+      <div class="legend" id="planLegend"></div>
+      <div class="plan-stats">
+        <div class="stat"><div class="label">Saving</div><div class="val" id="pSave">€0</div></div>
+        <div class="stat"><div class="label">Investing</div><div class="val" id="pInvest">€0</div></div>
+        <div class="stat"><div class="label">Left to spend</div><div class="val" id="pLeft">€0</div></div>
+      </div>
+
+      <div class="plan-sec">
+        <h3>Towards your visions</h3>
+        <div id="planVisions"></div>
+      </div>
+      <div class="plan-sec">
+        <h3>General</h3>
+        <div class="alloc"><div class="emoji">🏦</div><div style="min-width:0"><div class="name">General savings</div><div class="meta">Emergency buffer, cash savings</div></div>
+          <div class="ctl"><input type="text" id="genSaveInput" inputmode="decimal" autocomplete="off" data-money aria-label="General savings per month"></div></div>
+        <div class="alloc"><div class="emoji">📈</div><div style="min-width:0"><div class="name">General investing</div><div class="meta">Portfolio contributions</div></div>
+          <div class="ctl"><input type="text" id="investInput" inputmode="decimal" autocomplete="off" data-money aria-label="General investing per month"></div></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn soft sm" id="planAuto">Fill from vision deadlines</button>
+        <button class="btn sm" id="planApply">Add this month to visions</button>
+      </div>
+
+      <div class="plan-sec">
+        <h3>Spending allocation</h3>
+        <div class="unalloc" id="planUnalloc"></div>
+      </div>
     </div>
 
     <div class="card">
@@ -878,6 +938,26 @@ function portfolio() {
   });
   return { value, invested, gain: value - invested, ret: invested ? (value - invested) / invested * 100 : 0, byType };
 }
+function plan() {
+  S.plan ||= { general: 0, visions: {}, applied: {} };
+  S.plan.visions ||= {}; S.plan.applied ||= {};
+  return S.plan;
+}
+function visionNeed(v) {
+  const need = Math.max(0, num(v.target) - num(v.saved));
+  if (!need || !v.date) return 0;
+  const months = Math.max(1, Math.round((new Date(v.date) - new Date()) / (30.44 * 864e5)));
+  return Math.ceil(need / months);
+}
+function planTotals() {
+  const P = plan();
+  let toVisionsSave = 0, toVisionsInvest = 0;
+  S.visions.forEach(v => { const a = P.visions[v.id]; if (!a) return; if (a.kind === 'invest') toVisionsInvest += num(a.amt); else toVisionsSave += num(a.amt); });
+  const save = toVisionsSave + num(P.general), invest = toVisionsInvest + num(S.investPerMonth);
+  const income = num(S.income), left = income - save - invest;
+  const allocated = Object.values(S.budgets).reduce((a, b) => a + num(b), 0);
+  return { save, invest, toVisions: toVisionsSave + toVisionsInvest, income, left, allocated, unallocated: left - allocated, rate: income ? (save + invest) / income * 100 : 0 };
+}
 function totals() {
   const spent = monthTx().reduce((a, t) => a + num(t.amount), 0);
   const budget = Object.values(S.budgets).reduce((a, b) => a + num(b), 0);
@@ -917,7 +997,7 @@ function renderHome() {
   $('hBudgetLeft').className = 'val ' + (t.budgetLeft < 0 ? 'neg' : '');
   $('hPortfolio').textContent = fmt0(t.p.value);
   $('hSpent').textContent = fmt0(t.spent);
-  $('hInvested').textContent = fmt0(num(S.investPerMonth));
+  $('hInvested').textContent = fmt0(planTotals().invest);
   const by = spentByCat(thisMonth());
   const cats = CATEGORIES.filter(c => by[c] > 0);
   $('mixEmpty').hidden = cats.length > 0;
@@ -930,6 +1010,7 @@ function renderBudget() {
   $('incomeInput').value = S.income;
   $('investInput').value = S.investPerMonth;
   $('cashInput').value = S.cash;
+  renderPlan();
   const by = spentByCat(thisMonth());
   const t = totals();
   $('budgetTotals').textContent = `${fmt0(t.spent)} of ${fmt0(t.budget)}`;
@@ -968,6 +1049,53 @@ function renderBudget() {
     },
   });
 }
+function renderPlan() {
+  const P = plan(), T = planTotals();
+  $('genSaveInput').value = num(P.general);
+  $('pSave').textContent = fmt0(T.save);
+  $('pInvest').textContent = fmt0(T.invest);
+  $('pLeft').textContent = fmt0(T.left);
+  $('pLeft').className = 'val ' + (T.left < 0 ? 'neg' : '');
+  const rp = $('saveRate');
+  rp.textContent = `${Math.round(T.rate)}% saved & invested`;
+  rp.className = 'pill ' + (T.rate >= 20 ? 'ok' : '');
+
+  const base = Math.max(T.income, T.save + T.invest + Math.max(T.allocated, 0)) || 1;
+  const segs = [
+    ['Saving', T.save, 'var(--c1)'], ['Investing', T.invest, 'var(--c6)'],
+    ['Categories', Math.min(T.allocated, Math.max(T.left, 0)), 'var(--c3)'],
+    [T.unallocated >= 0 ? 'Unallocated' : 'Over-allocated', Math.abs(T.unallocated), T.unallocated >= 0 ? 'var(--c8)' : 'var(--neg)'],
+  ];
+  $('planFlow').innerHTML = segs.map(([, v, c]) => v > 0 ? `<i style="width:${v / base * 100}%;background:${c}"></i>` : '').join('');
+  $('planLegend').innerHTML = segs.filter(([, v]) => v > 0).map(([l, v, c]) => `<span><i class="sw" style="background:${c}"></i>${l} ${fmt0(v)}</span>`).join('');
+
+  $('planVisions').innerHTML = S.visions.length ? S.visions.map(v => {
+    const a = P.visions[v.id] || { amt: 0, kind: 'save' }, need = visionNeed(v), amt = num(a.amt);
+    const left = Math.max(0, num(v.target) - num(v.saved));
+    let meta;
+    if (!left) meta = 'Fully funded 🎉';
+    else if (need) meta = `Needs ${fmt0(need)}/mo · ` + (amt >= need ? '<span class="ontrack">on track</span>' : amt > 0 ? `<span class="behind">${fmt0(need - amt)}/mo short</span>` : 'not planned yet');
+    else meta = amt > 0 ? `Done in ~${Math.ceil(left / amt)} months` : `${fmt0(left)} to go`;
+    return `<div class="alloc v">
+      <div class="emoji">${esc(v.emoji || '✦')}</div>
+      <div style="min-width:0"><div class="name">${esc(v.name)}</div><div class="meta">${meta}</div></div>
+      <div class="ctl">
+        <span class="mini-seg"><button type="button" class="${a.kind !== 'invest' ? 'on' : ''}" data-plan-kind="${v.id}" data-kind="save">Save</button><button type="button" class="${a.kind === 'invest' ? 'on' : ''}" data-plan-kind="${v.id}" data-kind="invest">Invest</button></span>
+        <input type="text" inputmode="decimal" autocomplete="off" data-money data-plan-amt="${v.id}" value="${amt || ''}" placeholder="${need || 0}" aria-label="${esc(v.name)} per month">
+      </div>
+    </div>`;
+  }).join('') : '<div class="empty">Add a vision to plan monthly contributions towards it.</div>';
+
+  const applied = P.applied[thisMonth()];
+  $('planApply').disabled = !!applied || T.toVisions <= 0;
+  $('planApply').textContent = applied ? `✓ Added for ${new Date().toLocaleDateString(undefined, { month: 'long' })}` : `Add ${fmt0(T.toVisions)} to visions`;
+
+  const u = T.unallocated;
+  $('planUnalloc').innerHTML = `<div><div class="meta" style="font-size:12px;color:var(--muted)">${fmt0(T.left)} left to spend · ${fmt0(T.allocated)} in category budgets</div>
+      <strong class="${u < 0 ? 'neg' : 'pos'}">${u >= 0 ? fmt0(u) + ' unallocated' : fmt0(-u) + ' over-allocated'}</strong></div>
+    ${Math.abs(u) >= 1 && T.left > 0 ? `<button class="btn sm ${u < 0 ? '' : 'soft'}" id="planFit">${u < 0 ? 'Scale categories to fit' : 'Spread across categories'}</button>` : ''}`;
+}
+
 function monthName(mk) { const [y, m] = mk.split('-'); return new Date(+y, +m - 1, 1).toLocaleDateString(undefined, { month: 'long', year: 'numeric' }); }
 function renderTxList() {
   const f = $('txFilter').value;
@@ -1014,7 +1142,8 @@ function renderPortfolio() {
     notes.push(`Largest position: <strong>${esc(top.h.ticker || top.h.name)}</strong> at ${topShare.toFixed(0)}% of the portfolio${topShare > 40 ? ' — a concentration worth watching.' : '.'}`);
     const eq = ((p.byType.ETF || 0) + (p.byType.Stock || 0)) / p.value * 100;
     notes.push(`Equity exposure: ${eq.toFixed(0)}%. Bonds: ${((p.byType.Bond || 0) / p.value * 100).toFixed(0)}%. Crypto: ${((p.byType.Crypto || 0) / p.value * 100).toFixed(0)}%.`);
-    const yrs = num(S.investPerMonth) > 0 ? `At ${fmt0(num(S.investPerMonth))}/mo and 6% a year, you'd have roughly <strong>${fmt0(fv(p.value, num(S.investPerMonth), 0.06, 10))}</strong> in 10 years.` : '';
+    const inv = planTotals().invest;
+    const yrs = inv > 0 ? `At ${fmt0(inv)}/mo and 6% a year, you'd have roughly <strong>${fmt0(fv(p.value, inv, 0.06, 10))}</strong> in 10 years.` : '';
     if (yrs) notes.push(yrs);
   } else notes.push('Add holdings to see an analysis.');
   $('analysisNotes').innerHTML = notes.map(n => `<div>${n}</div>`).join('');
@@ -1092,6 +1221,8 @@ function renderVision() {
       const months = Math.max(1, Math.round((new Date(v.date) - new Date()) / (30.44 * 864e5)));
       pace = `${fmt0(need)} to go · ${fmt0(need / months)}/mo to hit ${new Date(v.date).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}`;
     } else pace = `${fmt0(need)} to go`;
+    const planned = num(plan().visions[v.id]?.amt);
+    if (need > 0 && planned > 0) pace += ` · ${fmt0(planned)}/mo planned` + (plan().visions[v.id].kind === 'invest' ? ' (invested)' : '');
     return `<div class="vision">
       <div class="head">
         <div class="emoji">${esc(v.emoji || '✦')}</div>
@@ -1319,7 +1450,9 @@ function contextBlob() {
   const r = n => Math.round(n * 100) / 100;
   return JSON.stringify({
     today: iso(new Date()), currency: S.currency,
-    monthlyIncome: num(S.income), investPerMonth: num(S.investPerMonth), cashSavings: num(S.cash),
+    monthlyIncome: num(S.income), cashSavings: num(S.cash),
+    monthlyPlan: (() => { const T = planTotals(), P = plan(); return { savingPerMonth: T.save, investingPerMonth: T.invest, leftToSpend: T.left, allocatedToCategories: T.allocated, unallocated: T.unallocated, savingsRatePct: Math.round(T.rate), generalSavings: num(P.general), generalInvesting: num(S.investPerMonth),
+      toVisions: S.visions.filter(v => P.visions[v.id] && num(P.visions[v.id].amt)).map(v => ({ vision: v.name, perMonth: num(P.visions[v.id].amt), as: P.visions[v.id].kind || 'save', neededPerMonthForDeadline: visionNeed(v) })) }; })(),
     netWorth: r(t.net),
     budgetsByCategory: S.budgets,
     spentThisMonthByCategory: Object.fromEntries(Object.entries(cur).map(([k, v]) => [k, r(v)])),
@@ -1435,6 +1568,34 @@ function bind() {
   // Budget inputs
   const bindNum = (id, key) => $(id).addEventListener('change', e => { S[key] = money(e.target.value); save(); renderAll(); });
   bindNum('incomeInput', 'income'); bindNum('investInput', 'investPerMonth'); bindNum('cashInput', 'cash');
+  $('genSaveInput').addEventListener('change', e => { plan().general = money(e.target.value); save(); renderAll(); });
+  $('planCard').addEventListener('change', e => {
+    const id = e.target.dataset.planAmt; if (!id) return;
+    const P = plan(); P.visions[id] = { kind: 'save', ...P.visions[id], amt: money(e.target.value) }; save(); renderAll();
+  });
+  $('planCard').addEventListener('click', e => {
+    const P = plan(), k = e.target.closest('[data-plan-kind]');
+    if (k) { P.visions[k.dataset.planKind] = { amt: 0, ...P.visions[k.dataset.planKind], kind: k.dataset.kind }; save(); renderAll(); return; }
+    if (e.target.closest('#planAuto')) {
+      let n = 0;
+      S.visions.forEach(v => { const need = visionNeed(v); if (need) { P.visions[v.id] = { kind: 'save', ...P.visions[v.id], amt: need }; n++; } });
+      save(); renderAll(); return toast(n ? `Set ${n} vision${n === 1 ? '' : 's'} to hit their deadlines` : 'Give your visions a target date first');
+    }
+    if (e.target.closest('#planApply')) {
+      const T = planTotals(); if (P.applied[thisMonth()] || T.toVisions <= 0) return;
+      if (!confirm(`Add this month's ${fmt0(T.toVisions)} to your visions' saved amounts?`)) return;
+      S.visions.forEach(v => { const a = P.visions[v.id]; if (a && num(a.amt) > 0) v.saved = num(v.saved) + num(a.amt); });
+      P.applied[thisMonth()] = true; save(); renderAll(); return toast(`${fmt0(T.toVisions)} added to your visions ✨`);
+    }
+    if (e.target.closest('#planFit')) {
+      const T = planTotals(); if (T.left <= 0) return;
+      const total = Object.values(S.budgets).reduce((a, b) => a + num(b), 0);
+      CATEGORIES.forEach(c => { S.budgets[c] = total > 0 ? Math.round(num(S.budgets[c]) / total * T.left) : Math.round(T.left / CATEGORIES.length); });
+      const diff = Math.round(T.left) - Object.values(S.budgets).reduce((a, b) => a + b, 0);
+      S.budgets.Other = Math.max(0, num(S.budgets.Other) + diff);
+      save(); renderAll(); toast('Category budgets now match what\'s left to spend');
+    }
+  });
   $('budgetRows').addEventListener('change', e => {
     const c = e.target.dataset.cat; if (!c) return;
     S.budgets[c] = money(e.target.value); save(); renderAll();
