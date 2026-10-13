@@ -195,6 +195,16 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
 .range:focus { box-shadow: none; }
 .whatif { background: var(--surface-2); border-radius: 14px; padding: 12px 14px; margin-top: 12px; }
 .whatif .top { display: flex; justify-content: space-between; font-weight: 700; font-size: 14px; margin-bottom: 6px; }
+.proj-legend { display: grid; gap: 8px; margin: 10px 0 4px; }
+.proj-legend .lg { display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; gap: 10px; align-items: center; font-size: 13px; }
+.proj-legend .lg b { font-weight: 700; }
+.proj-legend .lg .v { font-weight: 700; font-variant-numeric: tabular-nums; text-align: right; }
+.proj-legend .lg .d { color: var(--muted); font-size: 12px; }
+.proj-legend svg { width: 28px; height: 14px; display: block; }
+details.how { margin-top: 10px; background: var(--surface-2); border-radius: 14px; padding: 10px 14px; font-size: 13px; }
+details.how summary { cursor: pointer; font-weight: 700; }
+details.how ol { margin: 8px 0 2px; padding-left: 18px; color: var(--muted); display: grid; gap: 4px; }
+details.how b { color: var(--text); }
 .disclaimer { font-size: 11px; color: var(--faint); margin-top: 12px; line-height: 1.4; }
 .tip { display: grid; grid-template-columns: 36px 1fr; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--border); }
 .tip:last-child { border-bottom: 0; }
@@ -417,7 +427,9 @@ nav.tabs button.on svg { stroke-width: 2.2; }
       <div class="proj-big" id="projBig">—</div>
       <div class="hint" id="projRange"></div>
       <label class="switch" style="margin-top:8px"><input type="checkbox" id="projReal"> Show in today's money (after ~2.5% inflation)</label>
-      <div class="chart-box" style="height:260px;margin-top:10px"><canvas id="projChart"></canvas></div>
+      <div class="chart-box" style="height:240px;margin-top:10px"><canvas id="projChart" role="img" aria-label="Projected wealth over time"></canvas></div>
+      <div class="proj-legend" id="projLegend"></div>
+      <details class="how"><summary>How this is calculated</summary><ol id="projHow"></ol></details>
       <div class="stats four">
         <div class="stat"><div class="label" id="projSpendLbl">Avg spend</div><div class="val" id="projSpend">—</div></div>
         <div class="stat"><div class="label">Monthly surplus</div><div class="val" id="projSurplus">—</div></div>
@@ -430,7 +442,7 @@ nav.tabs button.on svg { stroke-width: 2.2; }
         <div class="hint" id="projExtraFx"></div>
       </div>
       <div style="margin-top:14px"><h3 style="font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)">Milestones</h3><div class="list" id="projMilestones"></div></div>
-      <p class="disclaimer">Estimates, not guarantees. Assumes 3% / 6% / 9% yearly returns on investments (cautious / expected / optimistic), 1–3% on cash, contributions rising 2% a year, and a 4% safe withdrawal rate for passive income and financial independence (25× yearly spending). Not financial advice.</p>
+      <p class="disclaimer">Estimates, not guarantees: real returns vary year to year and can be negative. Not financial advice.</p>
     </div>
 
     <div class="card" id="growCard">
@@ -1126,6 +1138,7 @@ function simulate(scen, P = proj(), flows = monthlyFlows(P)) {
   return pts;
 }
 const deflate = (v, y) => v / Math.pow(1 + INFLATION, y);
+const pctTxt = r => `${+(r * 100).toFixed(1)}%`;
 
 function renderProjection() {
   const P = proj(), flows = monthlyFlows(P);
@@ -1175,20 +1188,37 @@ function renderProjection() {
   const ser = (k, f = 'total') => runs[k].map(p => Math.round(shown(p[f], p.y)));
   const hexA = (c, a) => { const h = c.replace('#', ''); if (h.length !== 6) return c; const n = parseInt(h, 16); return `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${a})`; };
   const c1 = css('--c1'), c3 = css('--c3'), muted = css('--muted');
+  const compact = v => { try { return new Intl.NumberFormat(undefined, { style: 'currency', currency: S.currency, notation: 'compact', maximumFractionDigits: 1 }).format(v); } catch { return fmt0(v); } };
+  const lastBase = ser('base').at(-1), lastLow = ser('low').at(-1), lastHigh = ser('high').at(-1), lastIn = ser('base', 'contrib').at(-1);
+  const sw = { band: `<svg viewBox="0 0 28 14"><rect x="0" y="1" width="28" height="12" rx="3" fill="${hexA(c1, .18)}" stroke="${hexA(c1, .45)}"/></svg>`,
+    line: `<svg viewBox="0 0 28 14"><line x1="1" y1="7" x2="27" y2="7" stroke="${c1}" stroke-width="3" stroke-linecap="round"/></svg>`,
+    dash: `<svg viewBox="0 0 28 14"><line x1="1" y1="7" x2="27" y2="7" stroke="${c3}" stroke-width="2" stroke-dasharray="5 4"/></svg>` };
+  $('projLegend').innerHTML = `
+    <div class="lg">${sw.line}<div><b>Expected</b><div class="d">${pctTxt(SCEN.base.inv)} a year on investments</div></div><span class="v">${fmt0(lastBase)}</span></div>
+    <div class="lg">${sw.band}<div><b>Range of outcomes</b><div class="d">Weak markets (${pctTxt(SCEN.low.inv)}/yr) to strong (${pctTxt(SCEN.high.inv)}/yr)</div></div><span class="v">${compact(lastLow)} – ${compact(lastHigh)}</span></div>
+    <div class="lg">${sw.dash}<div><b>What you put in</b><div class="d">Today's assets + all contributions, no growth. Gap above = growth (${compact(Math.max(0, lastBase - lastIn))})</div></div><span class="v">${fmt0(lastIn)}</span></div>`;
+  const yr0 = Math.round(flows.invest), sv0 = Math.round(flows.saveCash);
+  $('projHow').innerHTML = [
+    `<b>Start</b> with today's cash ${fmt0(num(S.cash))} + portfolio ${fmt0(portfolio().value)} = ${fmt0(num(S.cash) + portfolio().value)}.`,
+    `<b>Each month add</b> ${fmt0(yr0)} to investments and ${sv0 >= 0 ? fmt0(sv0) + ' to cash' : fmt0(-sv0) + ' drawn from cash'}, from your ${P.basis === 'history' ? `spending history (income ${fmt0(flows.income)} − avg spend ${fmt0(flows.spend)})` : 'Monthly Plan'}${P.extra ? `, incl. +${fmt0(P.extra)} what-if income` : ''}. These rise ${pctTxt(INCOME_GROWTH)} a year with income.`,
+    `<b>Grow</b> investments monthly at ${pctTxt(SCEN.low.inv)} / ${pctTxt(SCEN.base.inv)} / ${pctTxt(SCEN.high.inv)} a year (weak / expected / strong) and cash at ${pctTxt(SCEN.low.cash)} / ${pctTxt(SCEN.base.cash)} / ${pctTxt(SCEN.high.cash)}.`,
+    P.real ? `<b>Today's money:</b> each year's value is divided by (1 + ${pctTxt(INFLATION)})<sup>years</sup> so it shows today's buying power.` : `<b>Future euros:</b> values are not adjusted for inflation (turn on "today's money" to adjust by ${pctTxt(INFLATION)}/yr).`,
+    `<b>Passive income</b> = expected wealth × ${pctTxt(SWR)} ÷ 12. <b>Financial independence</b> = 25 × yearly spending (${fmt0(flows.spend * 12)}).`,
+  ].map(x => `<li>${x}</li>`).join('');
   drawChart('projChart', {
     type: 'line',
     data: { labels, datasets: [
-      { label: SCEN.low.label, data: ser('low'), borderColor: hexA(c1, .35), borderWidth: 1, pointRadius: 0, fill: false, tension: .3 },
-      { label: SCEN.high.label, data: ser('high'), borderColor: hexA(c1, .35), borderWidth: 1, pointRadius: 0, fill: '-1', backgroundColor: hexA(c1, .14), tension: .3 },
-      { label: SCEN.base.label, data: ser('base'), borderColor: c1, borderWidth: 3, pointRadius: 0, pointHoverRadius: 4, fill: false, tension: .3 },
-      { label: 'Money put in', data: ser('base', 'contrib'), borderColor: hexA(c3, .9), borderDash: [5, 4], borderWidth: 1.5, pointRadius: 0, fill: false, tension: .3 },
+      { label: `Weak markets (${pctTxt(SCEN.low.inv)})`, data: ser('low'), borderColor: hexA(c1, .45), borderWidth: 1, pointRadius: 0, fill: false, tension: .3 },
+      { label: `Strong markets (${pctTxt(SCEN.high.inv)})`, data: ser('high'), borderColor: hexA(c1, .45), borderWidth: 1, pointRadius: 0, fill: '-1', backgroundColor: hexA(c1, .16), tension: .3 },
+      { label: `Expected (${pctTxt(SCEN.base.inv)})`, data: ser('base'), borderColor: c1, borderWidth: 3, pointRadius: 0, pointHoverRadius: 4, fill: false, tension: .3 },
+      { label: 'What you put in', data: ser('base', 'contrib'), borderColor: c3, borderDash: [5, 4], borderWidth: 2, pointRadius: 0, fill: false, tension: .3 },
     ] },
     options: {
       maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
-      plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, boxHeight: 10, usePointStyle: true, color: css('--text'), filter: i => i.datasetIndex !== 0 } },
-        tooltip: { callbacks: { label: c => ` ${c.dataset.label}: ${fmt0(c.parsed.y)}` } } },
+      plugins: { legend: { display: false },
+        tooltip: { itemSort: (a, b) => [1, 2, 0, 3].indexOf(a.datasetIndex) - [1, 2, 0, 3].indexOf(b.datasetIndex), callbacks: { label: c => ` ${c.dataset.label}: ${fmt0(c.parsed.y)}` } } },
       scales: { x: { grid: { display: false }, ticks: { maxTicksLimit: 6, color: muted } },
-        y: { grid: { color: css('--border') }, ticks: { color: muted, callback: v => v >= 1e6 ? fmt0(v / 1e6).replace(/\.?0+$/, '') + 'M' : v >= 1e3 ? fmt0(v / 1e3) + 'k' : fmt0(v) } } },
+        y: { grid: { color: css('--border') }, ticks: { color: muted, maxTicksLimit: 6, callback: v => compact(v) } } },
     },
   });
 }
