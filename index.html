@@ -229,6 +229,37 @@ details.how b { color: var(--text); }
 .tagx { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 99px; background: var(--surface-2); color: var(--muted); }
 .ai-out a { color: var(--accent); word-break: break-word; }
 
+/* Gate: setup & lock */
+.gate { position: fixed; inset: 0; z-index: 100; background: var(--bg); overflow-y: auto; display: grid; place-items: start center; padding: calc(24px + env(safe-area-inset-top)) 16px calc(24px + env(safe-area-inset-bottom)); }
+.gate[hidden] { display: none; }
+.gate::before { content: ""; position: fixed; inset: -20% -20% auto auto; width: 70vw; height: 70vw; max-width: 520px; max-height: 520px; border-radius: 50%; background: radial-gradient(circle, color-mix(in srgb, var(--accent) 22%, transparent), transparent 70%); pointer-events: none; }
+.gate-card { width: 100%; max-width: 440px; position: relative; padding-top: 4vh; animation: fade .25s ease; }
+.gate-card h1 { font-size: 30px; font-weight: 800; letter-spacing: -.03em; margin: 14px 0 6px; }
+.gate-card h2 { font-size: 22px; margin: 10px 0 4px; }
+.gate-logo .logo { width: 52px; height: 52px; border-radius: 16px; display: grid; place-items: center; background: var(--grad); box-shadow: var(--shadow-lg); }
+.gate-logo .logo svg { width: 30px; height: 30px; }
+.gate-nav { display: flex; justify-content: space-between; gap: 8px; margin-top: 14px; }
+.steps { display: flex; gap: 6px; margin-bottom: 8px; }
+.steps i { flex: 1; height: 4px; border-radius: 99px; background: var(--border); }
+.steps i.on { background: var(--grad); }
+body.gated { overflow: hidden; }
+body.locked main, body.locked nav.tabs, body.locked .fab, body.locked header.top { visibility: hidden; }
+.pin { text-align: center; display: grid; justify-items: center; }
+.pin .sub { min-height: 20px; }
+.pin-dots { display: flex; gap: 14px; margin: 14px 0 22px; }
+.pin-dots i { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--muted); }
+.pin-dots i.on { background: var(--accent); border-color: var(--accent); }
+.pin-dots.shake { animation: shake .35s; }
+@keyframes shake { 20%, 60% { transform: translateX(-8px); } 40%, 80% { transform: translateX(8px); } }
+.keypad { display: grid; grid-template-columns: repeat(3, 72px); gap: 14px; }
+.keypad button { width: 72px; height: 72px; border-radius: 50%; border: 1px solid var(--border); background: var(--surface); font-size: 26px; font-weight: 600; cursor: pointer; box-shadow: var(--shadow); }
+.keypad button:active { background: var(--accent-soft); }
+.keypad button.fn { border: 0; background: none; box-shadow: none; font-size: 15px; color: var(--muted); }
+.linkbtn { margin-top: 18px; border: 0; background: none; color: var(--accent); font-weight: 600; cursor: pointer; font-size: 14px; }
+.notice { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 16px; background: var(--accent-soft); margin-bottom: 14px; font-size: 14px; flex-wrap: wrap; }
+.notice .meta { font-size: 12px; color: var(--muted); }
+.greeting { font-size: 24px; font-weight: 800; letter-spacing: -.03em; margin: 6px 0 14px; }
+
 /* Monthly plan */
 .flow { display: flex; height: 14px; border-radius: 99px; overflow: hidden; background: var(--surface-2); margin: 6px 0 10px; }
 .flow i { display: block; height: 100%; transition: width .4s ease; }
@@ -401,7 +432,7 @@ nav.tabs button.on svg { stroke-width: 2.2; }
 
 <header class="top">
   <div class="wrap">
-    <div class="brand"><span class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7l4.5 10L12 9l4.5 8L21 7"/></svg></span>Wealthr</div>
+    <div class="brand"><span class="logo" id="brandLogo"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7l4.5 10L12 9l4.5 8L21 7"/></svg></span>Wealthr</div>
     <div class="month-label" id="monthLabel"></div>
   </div>
 </header>
@@ -414,6 +445,8 @@ nav.tabs button.on svg { stroke-width: 2.2; }
 
   <!-- HOME -->
   <section class="view active" id="view-home">
+    <div class="greeting" id="greeting"></div>
+    <div id="notices"></div>
     <div class="card hero">
       <div class="eyebrow">Net Worth</div>
       <div class="big" id="netWorth">—</div>
@@ -824,14 +857,22 @@ nav.tabs button.on svg { stroke-width: 2.2; }
       </div>
     </div>
     <div class="card">
-      <h2>Data</h2>
-      <p class="sub">Everything lives in this browser's storage. Export to back up or move devices.</p>
+      <div class="card-head"><h2>Privacy &amp; lock</h2><span class="pill" id="pinStatus"></span></div>
+      <p class="sub">Your planner is private to this device: no account, nothing uploaded. Add a PIN so nobody else who picks up your phone can open it. It locks when you open the app and after a minute away.</p>
+      <div class="btn-row" style="margin-top:0" id="pinBtns"></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><h2>Backup &amp; devices</h2><span class="month-label" id="lastBackup"></span></div>
+      <p class="sub">Save a backup file to Files or iCloud. Restore it here or on another device to move your planner.</p>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="btn ghost" id="exportBtn">Export JSON</button>
-        <label class="btn ghost" style="cursor:pointer">Import JSON<input type="file" id="importFile" accept="application/json" hidden></label>
+        <button class="btn" id="exportBtn">Back up now</button>
+        <label class="btn ghost" style="cursor:pointer">Restore from file<input type="file" id="importFile" accept="application/json,.json" hidden></label>
       </div>
-      <p class="sub" style="margin-top:16px">Reset all data to sample values. Cannot be undone.</p>
-      <button class="btn danger" id="resetBtn">Reset data</button>
+      <p class="sub" style="margin-top:16px">Start over with an empty planner, or explore with sample data. Both erase what's on this device, so back up first.</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn danger" id="resetBtn">Start fresh</button>
+        <button class="btn ghost" id="sampleBtn">Load sample data</button>
+      </div>
     </div>
   </section>
 </main>
@@ -859,6 +900,7 @@ nav.tabs button.on svg { stroke-width: 2.2; }
 </nav>
 
 <div class="toast" id="toast"></div>
+<div class="gate" id="gate" hidden><div class="gate-card" id="gateCard"></div></div>
 
 <script>
 (() => {
@@ -950,11 +992,219 @@ function sampleData() {
 let S;
 function load() {
   const raw = ls.get(STORE_KEY);
-  if (raw) { try { S = Object.assign(sampleData(), JSON.parse(raw)); return; } catch {} }
-  S = sampleData();
-  save();
+  if (raw) { try { S = Object.assign(emptyData(), JSON.parse(raw)); return true; } catch {} }
+  S = emptyData();
+  return false;
 }
-function save() { ls.set(STORE_KEY, JSON.stringify(S)); }
+function save() { if (!setupPending) ls.set(STORE_KEY, JSON.stringify(S)); }
+
+/* ---------- Private planner: setup, PIN lock, backups ---------- */
+let setupPending = false;
+const BUDGET_SHARES = { Housing: .45, Groceries: .13, Dining: .07, Transport: .05, Utilities: .06, Shopping: .07, Entertainment: .05, Health: .03, Travel: .06, Other: .03 };
+function emptyData(currency = 'EUR') {
+  return {
+    currency, income: 0, investPerMonth: 0, cash: 0,
+    budgets: Object.fromEntries(CATEGORIES.map(c => [c, 0])),
+    transactions: [], holdings: [], horizonGoals: { short: '', medium: '', long: '' },
+    visions: [], workouts: [], goals: [], chat: [],
+    profile: { name: '' }, meta: { created: iso(new Date()) },
+  };
+}
+const hasRealData = () => S.transactions.length || S.holdings.length || S.visions.length || S.workouts.length || num(S.income) > 0;
+
+const gate = () => $('gate');
+function openGate(html) { $('gateCard').innerHTML = html; gate().hidden = false; document.body.classList.add('gated'); }
+function closeGate() { gate().hidden = true; document.body.classList.remove('gated'); $('gateCard').innerHTML = ''; }
+
+/* Setup wizard */
+let setup = {};
+function startSetup() { setupPending = true; setup = { step: 0, currency: S?.currency || 'EUR' }; renderSetup(); }
+function renderSetup() {
+  const dots = n => `<div class="steps">${[1, 2, 3].map(i => `<i class="${i <= n ? 'on' : ''}"></i>`).join('')}</div>`;
+  const cur = ['EUR', 'GBP', 'USD', 'CHF', 'JPY'].map(c => `<option ${c === setup.currency ? 'selected' : ''}>${c}</option>`).join('');
+  if (setup.step === 0) return openGate(`
+    <div class="gate-logo">${$('brandLogo').outerHTML}</div>
+    <h1>Welcome to Wealthr</h1>
+    <p class="sub">Your money, goals and training in one private planner. Everything you enter stays on this device; there's no account and nothing is uploaded.</p>
+    <button class="btn block" data-setup="start">Set up my planner</button>
+    <button class="btn ghost block" data-setup="demo" style="margin-top:8px">Explore with sample data</button>`);
+  if (setup.step === 1) return openGate(`${dots(1)}
+    <h2>About you</h2><p class="sub">Rough numbers are fine. You can change everything later.</p>
+    <form class="form" data-setup-form="1">
+      <div class="row"><label class="f">First name<input name="name" maxlength="30" autocomplete="given-name" value="${esc(setup.name || '')}" placeholder="Optional"></label>
+      <label class="f">Currency<select name="currency">${cur}</select></label></div>
+      <label class="f">Monthly take-home income<input name="income" inputmode="decimal" autocomplete="off" data-money value="${setup.income ?? ''}" placeholder="e.g. 3500"><span class="hint"></span></label>
+      <div class="row"><label class="f">Cash &amp; savings now<input name="cash" inputmode="decimal" autocomplete="off" data-money value="${setup.cash ?? ''}" placeholder="0"><span class="hint"></span></label>
+      <label class="f">Investments now<input name="invested" inputmode="decimal" autocomplete="off" data-money value="${setup.invested ?? ''}" placeholder="0"><span class="hint"></span></label></div>
+      <div class="gate-nav"><button type="button" class="btn ghost" data-setup="back">Back</button><button class="btn" type="submit">Next</button></div>
+    </form>`);
+  if (setup.step === 2) {
+    const inc = setup.income || 0;
+    return openGate(`${dots(2)}
+    <h2>Pay yourself first</h2><p class="sub">How much do you want to put away each month? A common target is 20% of income${inc ? ` (${fmt0(inc * 0.2)})` : ''}.</p>
+    <form class="form" data-setup-form="2">
+      <div class="row"><label class="f">Save / month<input name="save" inputmode="decimal" autocomplete="off" data-money value="${setup.save ?? (inc ? Math.round(inc * 0.1) : '')}"><span class="hint"></span></label>
+      <label class="f">Invest / month<input name="invest" inputmode="decimal" autocomplete="off" data-money value="${setup.invest ?? (inc ? Math.round(inc * 0.1) : '')}"><span class="hint"></span></label></div>
+      <div class="note" id="setupLeft" style="margin-top:0"></div>
+      <h3 style="font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-top:6px">A first goal (optional)</h3>
+      <label class="f">What are you saving for?<input name="vName" maxlength="60" value="${esc(setup.vName || '')}" placeholder="e.g. House deposit, Japan trip"></label>
+      <div class="row"><label class="f">Target amount<input name="vTarget" inputmode="decimal" autocomplete="off" data-money value="${setup.vTarget ?? ''}"><span class="hint"></span></label>
+      <label class="f">By when<input name="vDate" type="date" value="${esc(setup.vDate || '')}"></label></div>
+      <div class="gate-nav"><button type="button" class="btn ghost" data-setup="back">Back</button><button class="btn" type="submit">Next</button></div>
+    </form>`), updateSetupLeft();
+  }
+  return openGate(`${dots(3)}
+    <div class="gate-logo" style="font-size:40px">🎉</div>
+    <h2>Your planner is ready${setup.name ? `, ${esc(setup.name)}` : ''}</h2>
+    <p class="sub">A few tips to keep it safe and private:</p>
+    <div class="tip"><div class="tip-i">🔒</div><div><div class="title">Add a PIN</div><div class="meta">Settings → Privacy &amp; lock, so nobody picking up your phone can open it.</div></div></div>
+    <div class="tip"><div class="tip-i">💾</div><div><div class="title">Back up monthly</div><div class="meta">Your data lives only on this device. Settings → Back up now saves a file to Files or iCloud.</div></div></div>
+    <div class="tip"><div class="tip-i">📱</div><div><div class="title">Install it</div><div class="meta">Safari → Share → Add to Home Screen.</div></div></div>
+    <div class="gate-nav"><button class="btn ghost" data-setup="back">Back</button><button class="btn" data-setup="finish">Open my planner</button></div>`);
+}
+function updateSetupLeft() {
+  const f = document.querySelector('[data-setup-form="2"]'); if (!f) return;
+  const inc = setup.income || 0, sv = money(f.elements.save.value), iv = money(f.elements.invest.value), left = inc - sv - iv;
+  $('setupLeft').innerHTML = inc ? `Putting away <strong>${Math.round((sv + iv) / inc * 100)}%</strong> · <strong class="${left < 0 ? 'neg' : ''}">${fmt0(left)}</strong> left each month to spend, split across your category budgets.` : 'Add your income in the previous step to see what is left to spend.';
+}
+function finishSetup() {
+  const D = emptyData(setup.currency);
+  D.profile.name = (setup.name || '').trim();
+  D.income = setup.income || 0; D.cash = setup.cash || 0; D.investPerMonth = setup.invest || 0;
+  if (setup.invested > 0) D.holdings.push({ id: uid(), name: 'Existing investments', ticker: '', type: 'ETF', units: 1, cost: setup.invested, price: setup.invested });
+  D.plan = { general: setup.save || 0, visions: {}, applied: {} };
+  if ((setup.vName || '').trim() && setup.vTarget > 0) {
+    const v = { id: uid(), name: setup.vName.trim(), emoji: '✦', target: setup.vTarget, saved: 0, date: setup.vDate || '' };
+    D.visions.push(v);
+  }
+  const left = Math.max(0, D.income - (setup.save || 0) - (setup.invest || 0));
+  CATEGORIES.forEach(c => { D.budgets[c] = Math.round(left * BUDGET_SHARES[c] / 10) * 10; });
+  S = D; setupPending = false; save(); closeGate(); renderAll(); show('home');
+  toast(D.profile.name ? `Welcome, ${D.profile.name}!` : 'Your planner is ready');
+}
+function bindSetup() {
+  $('gateCard').addEventListener('click', e => {
+    const b = e.target.closest('[data-setup]'); if (!b) return;
+    const a = b.dataset.setup;
+    if (a === 'start') { setup.step = 1; renderSetup(); }
+    else if (a === 'demo') { S = sampleData(); S.meta = { demo: true }; setupPending = false; save(); closeGate(); renderAll(); show('home'); }
+    else if (a === 'back') { setup.step = Math.max(0, setup.step - 1); renderSetup(); }
+    else if (a === 'finish') finishSetup();
+  });
+  $('gateCard').addEventListener('submit', e => {
+    const f = e.target.closest('[data-setup-form]'); if (!f) return;
+    e.preventDefault();
+    const el = f.elements;
+    if (f.dataset.setupForm === '1') { Object.assign(setup, { name: el.name.value.trim(), currency: el.currency.value, income: money(el.income.value), cash: money(el.cash.value), invested: money(el.invested.value) }); S.currency = setup.currency; }
+    else Object.assign(setup, { save: money(el.save.value), invest: money(el.invest.value), vName: el.vName.value, vTarget: money(el.vTarget.value), vDate: el.vDate.value });
+    setup.step++; renderSetup();
+  });
+  $('gateCard').addEventListener('input', e => { if (e.target.closest('[data-setup-form="2"]')) updateSetupLeft(); });
+}
+
+/* PIN lock */
+const PIN_KEY = 'wealthr.pin';
+const canPin = () => !!(window.crypto && crypto.subtle && window.isSecureContext);
+async function hashPin(pin, salt) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(`${salt}:${pin}`));
+  return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
+}
+const pinRecord = () => { try { return JSON.parse(ls.get(PIN_KEY) || 'null'); } catch { return null; } };
+let pinEntry = '', pinMode = null, pinFirst = '', pinFails = 0, pinBlockedUntil = 0, hiddenAt = 0;
+function renderPin(title, sub, { cancel = false, forgot = false } = {}) {
+  openGate(`<div class="pin">
+    <div class="gate-logo">${$('brandLogo').outerHTML}</div>
+    <h2>${title}</h2><p class="sub" id="pinSub">${sub}</p>
+    <div class="pin-dots" id="pinDots">${[0, 1, 2, 3].map(i => `<i class="${i < pinEntry.length ? 'on' : ''}"></i>`).join('')}</div>
+    <div class="keypad">${[1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => `<button data-key="${n}">${n}</button>`).join('')}
+      <button data-key="cancel" class="fn">${cancel ? 'Cancel' : ''}</button><button data-key="0">0</button><button data-key="del" class="fn" aria-label="Delete">⌫</button></div>
+    ${forgot ? '<button class="linkbtn" data-key="forgot">Forgot PIN?</button>' : ''}
+  </div>`);
+}
+const pinScreens = {
+  unlock: () => renderPin('Enter your PIN', S.profile?.name ? `Welcome back, ${esc(S.profile.name)}` : 'Your planner is locked', { forgot: true }),
+  set1: () => renderPin('Choose a 4-digit PIN', 'You\'ll need it to open Wealthr on this device.', { cancel: true }),
+  set2: () => renderPin('Confirm your PIN', 'Enter it once more.', { cancel: true }),
+};
+function lockNow() { const r = pinRecord(); if (!r || setupPending) return; pinMode = 'unlock'; pinEntry = ''; document.body.classList.add('locked'); pinScreens.unlock(); }
+async function pinComplete() {
+  const pin = pinEntry; pinEntry = '';
+  if (pinMode === 'unlock') {
+    const r = pinRecord();
+    if (r && await hashPin(pin, r.salt) === r.hash) { pinFails = 0; pinMode = null; document.body.classList.remove('locked'); closeGate(); return; }
+    pinFails++;
+    if (pinFails >= 5) pinBlockedUntil = Date.now() + 30000;
+    pinScreens.unlock(); shake(pinFails >= 5 ? 'Too many attempts. Wait 30 seconds.' : 'Wrong PIN, try again.');
+  } else if (pinMode === 'set1') { pinFirst = pin; pinMode = 'set2'; pinScreens.set2(); }
+  else if (pinMode === 'set2') {
+    if (pin !== pinFirst) { pinMode = 'set1'; pinScreens.set1(); return shake('PINs didn\'t match. Start again.'); }
+    const salt = crypto.getRandomValues(new Uint32Array(4)).join('-');
+    ls.set(PIN_KEY, JSON.stringify({ salt, hash: await hashPin(pin, salt) }));
+    pinMode = null; closeGate(); renderSettings(); toast('PIN set. Wealthr will lock when you leave it.');
+  }
+}
+function shake(msg) { const sub = $('pinSub'); if (sub) { sub.textContent = msg; sub.classList.add('neg'); } $('pinDots')?.classList.add('shake'); }
+function bindPin() {
+  $('gateCard').addEventListener('click', e => {
+    const k = e.target.closest('[data-key]'); if (!k || !pinMode) return;
+    const key = k.dataset.key;
+    if (key === 'cancel') { if (pinMode !== 'unlock') { pinMode = null; pinEntry = ''; closeGate(); } return; }
+    if (key === 'forgot') {
+      if (!confirm('Forgot your PIN? The only way back in is to erase this planner from this device and start again (or restore a backup file afterwards). Erase it?')) return;
+      ls.del(STORE_KEY); ls.del(PIN_KEY); location.reload(); return;
+    }
+    if (key === 'del') pinEntry = pinEntry.slice(0, -1);
+    else if (pinEntry.length < 4) {
+      if (pinMode === 'unlock' && Date.now() < pinBlockedUntil) return shake('Too many attempts. Wait 30 seconds.');
+      pinEntry += key;
+    }
+    $('pinDots').innerHTML = [0, 1, 2, 3].map(i => `<i class="${i < pinEntry.length ? 'on' : ''}"></i>`).join('');
+    if (pinEntry.length === 4) setTimeout(pinComplete, 120);
+  });
+  document.addEventListener('keydown', e => {
+    if (!pinMode || gate().hidden) return;
+    if (/^\d$/.test(e.key)) $('gateCard').querySelector(`[data-key="${e.key}"]`)?.click();
+    if (e.key === 'Backspace') $('gateCard').querySelector('[data-key="del"]')?.click();
+  });
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) hiddenAt = Date.now();
+    else if (pinRecord() && !pinMode && hiddenAt && Date.now() - hiddenAt > 60000) lockNow();
+  });
+}
+
+/* Backups */
+async function backupNow() {
+  const name = `wealthr-backup-${iso(new Date())}.json`;
+  const json = JSON.stringify(S, null, 2);
+  const file = typeof File === 'function' ? new File([json], name, { type: 'application/json' }) : null;
+  let done = false;
+  if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
+    try { await navigator.share({ files: [file], title: 'Wealthr backup' }); done = true; }
+    catch (e) { if (e && e.name === 'AbortError') return; }
+  }
+  if (!done) {
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([json], { type: 'application/json' })); a.download = name;
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  }
+  S.meta ||= {}; S.meta.lastBackup = new Date().toISOString(); save(); renderAll(); toast('Backup saved');
+}
+function backupDue() {
+  if (S.meta?.demo || !hasRealData()) return false;
+  const last = S.meta?.lastBackup ? new Date(S.meta.lastBackup) : null, snooze = S.meta?.backupSnooze ? new Date(S.meta.backupSnooze) : null;
+  if (snooze && Date.now() - snooze < 7 * 864e5) return false;
+  if (!last) return !S.meta?.created || Date.now() - new Date(S.meta.created) > 7 * 864e5;
+  return Date.now() - last > 30 * 864e5;
+}
+const lastBackupText = () => S.meta?.lastBackup ? new Date(S.meta.lastBackup).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }) : 'never';
+function renderNotices() {
+  const name = S.profile?.name;
+  const h = new Date().getHours();
+  $('greeting').textContent = `${h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening'}${name ? ', ' + name : ''}`;
+  let html = '';
+  if (S.meta?.demo) html += `<div class="notice"><div><strong>You're exploring sample data.</strong><div class="meta">Ready to plan with your own numbers? It only takes a minute.</div></div><button class="btn sm" data-notice="setup">Start my planner</button></div>`;
+  else if (backupDue()) html += `<div class="notice"><div><strong>Back up your planner</strong><div class="meta">Last backup: ${lastBackupText()}. Your data lives only on this device.</div></div><div style="display:flex;gap:6px"><button class="btn sm ghost" data-notice="later">Later</button><button class="btn sm" data-notice="backup">Back up</button></div></div>`;
+  $('notices').innerHTML = html;
+}
 
 /* ---------- Helpers ---------- */
 const $ = id => document.getElementById(id);
@@ -1766,12 +2016,19 @@ function renderSettings() {
   $('apiKey').value = key ? '••••••••' + key.slice(-4) : '';
   $('workspaceId').value = ls.get(WS_KEY) || '';
   $('currencySel').value = S.currency;
+  const hasPin = !!pinRecord();
+  $('pinStatus').textContent = hasPin ? '🔒 PIN on' : canPin() ? 'No PIN' : 'Unavailable';
+  $('pinStatus').className = 'pill ' + (hasPin ? 'ok' : '');
+  $('pinBtns').innerHTML = !canPin() ? '<span class="hint">PIN lock needs the secure (https) site.</span>'
+    : hasPin ? '<button class="btn ghost sm" id="pinChange">Change PIN</button><button class="btn ghost sm" id="pinLock">Lock now</button><button class="btn ghost sm" id="pinRemove">Remove PIN</button>'
+    : '<button class="btn sm" id="pinSet">Set a PIN</button>';
+  $('lastBackup').textContent = 'Last backup: ' + lastBackupText();
   $('themeSel').value = getUI().theme || 'system';
 }
 
 function renderAll() {
   $('monthLabel').textContent = new Date().toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
-  renderHome(); renderBudget(); renderPortfolio(); renderVision(); renderHealth(); renderChat(); renderSettings();
+  renderNotices(); renderHome(); renderBudget(); renderPortfolio(); renderVision(); renderHealth(); renderChat(); renderSettings();
 }
 
 /* ---------- AI ---------- */
@@ -2133,20 +2390,34 @@ function bind() {
   $('themeSel').addEventListener('change', e => { setUI({ theme: e.target.value }); applyTheme(); renderAll(); });
   window.matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', () => renderAll());
   $('resetBtn').addEventListener('click', () => {
-    if (!confirm('Reset all data to sample values? This cannot be undone.')) return;
-    S = sampleData(); save(); renderAll(); toast('Data reset');
+    if (!confirm('Erase everything on this device and start a fresh planner? Back up first if you might want it later.')) return;
+    S = emptyData(S.currency); startSetup();
   });
-  $('exportBtn').addEventListener('click', () => {
-    const blob = new Blob([JSON.stringify(S, null, 2)], { type: 'application/json' });
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `wealthr-${iso(new Date())}.json`;
-    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  $('sampleBtn').addEventListener('click', () => {
+    if (!confirm('Replace your planner on this device with sample data?')) return;
+    S = sampleData(); S.meta = { demo: true }; save(); renderAll(); show('home'); toast('Sample data loaded');
   });
+  $('exportBtn').addEventListener('click', backupNow);
+  $('view-settings').addEventListener('click', async e => {
+    const id = e.target.closest('button')?.id;
+    if (id === 'pinSet' || id === 'pinChange') { pinMode = 'set1'; pinEntry = ''; pinScreens.set1(); }
+    else if (id === 'pinLock') lockNow();
+    else if (id === 'pinRemove') { if (confirm('Remove the PIN? Anyone with this device could open your planner.')) { ls.del(PIN_KEY); renderSettings(); toast('PIN removed'); } }
+  });
+  $('notices').addEventListener('click', e => {
+    const a = e.target.closest('[data-notice]')?.dataset.notice; if (!a) return;
+    if (a === 'setup') { S = emptyData(S.currency); startSetup(); }
+    else if (a === 'backup') backupNow();
+    else if (a === 'later') { S.meta ||= {}; S.meta.backupSnooze = new Date().toISOString(); save(); renderNotices(); }
+  });
+  bindSetup(); bindPin();
   $('importFile').addEventListener('change', async e => {
     const f = e.target.files[0]; if (!f) return;
     try {
       const data = JSON.parse(await f.text());
       if (!data || typeof data !== 'object' || !Array.isArray(data.transactions)) throw new Error('bad');
-      S = Object.assign(sampleData(), data); save(); renderAll(); toast('Data imported');
+      if (hasRealData() && !confirm('Replace the planner on this device with this backup?')) return;
+      S = Object.assign(emptyData(), data); save(); renderAll(); toast('Backup restored');
     } catch { toast('That file isn\'t a Wealthr export'); }
     e.target.value = '';
   });
@@ -2174,13 +2445,15 @@ function bind() {
 
 /* ---------- Boot ---------- */
 applyTheme();
-load();
+const existing = load();
 renderAcademy();
 renderQuote();
 bind();
+if (!existing) startSetup();
 renderAll();
 const startView = getUI().view;
-if (startView && $('view-' + startView)) show(startView);
+if (existing && startView && $('view-' + startView)) show(startView);
+if (existing) lockNow();
 if (!window.Chart) window.addEventListener('load', () => window.Chart && renderAll());
 })();
 </script>

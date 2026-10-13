@@ -1,7 +1,7 @@
 # Finance
 
 Wealthr: a single-file static HTML personal finance app (no build step, no server).
-All data is stored in the browser's localStorage.
+All data is stored in the browser's localStorage, private to each device: new visitors go through a short setup and get their own empty planner (or can explore sample data), can protect it with a 4-digit PIN, and back it up or move it between devices with a backup file.
 
 ## Layout
 
