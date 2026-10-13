@@ -184,6 +184,32 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
 .budget-row .top { display: flex; justify-content: space-between; align-items: center; font-size: 14px; gap: 8px; font-weight: 500; }
 .budget-row .top input { width: 96px; padding: 5px 8px; font-size: 14px; text-align: right; border-radius: 9px; }
 
+/* Wealth projection & growth */
+.proj-controls { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, .8fr); gap: 8px; align-items: end; margin-bottom: 12px; }
+.proj-controls .seg { margin: 0; grid-template-columns: 1fr 1fr; }
+.proj-controls select, .proj-controls input { padding: 8px 10px; font-size: 14px; }
+.proj-big { font-size: 34px; font-weight: 800; letter-spacing: -.03em; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.switch { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--muted); cursor: pointer; }
+.switch input { width: 18px; height: 18px; accent-color: var(--accent); margin: 0; }
+.range { width: 100%; padding: 0; accent-color: var(--accent); background: none; border: 0; }
+.range:focus { box-shadow: none; }
+.whatif { background: var(--surface-2); border-radius: 14px; padding: 12px 14px; margin-top: 12px; }
+.whatif .top { display: flex; justify-content: space-between; font-weight: 700; font-size: 14px; margin-bottom: 6px; }
+.disclaimer { font-size: 11px; color: var(--faint); margin-top: 12px; line-height: 1.4; }
+.tip { display: grid; grid-template-columns: 36px 1fr; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--border); }
+.tip:last-child { border-bottom: 0; }
+.tip-i { width: 36px; height: 36px; border-radius: 11px; background: var(--accent-soft); display: grid; place-items: center; font-size: 17px; }
+.tip .title, .idea .title { font-weight: 700; font-size: 14px; }
+.tip .meta, .idea .meta { font-size: 13px; color: var(--muted); margin-top: 2px; }
+.seg.four { grid-template-columns: repeat(4, 1fr); }
+.seg.four button { font-size: 12px; padding: 8px 2px; }
+.idea { padding: 12px 0; border-bottom: 1px solid var(--border); }
+.idea:last-child { border-bottom: 0; }
+.idea-foot { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.tagx { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 99px; background: var(--surface-2); color: var(--muted); }
+.ai-out a { color: var(--accent); word-break: break-word; }
+
 /* Monthly plan */
 .flow { display: flex; height: 14px; border-radius: 99px; overflow: hidden; background: var(--surface-2); margin: 6px 0 10px; }
 .flow i { display: block; height: 100%; transition: width .4s ease; }
@@ -379,6 +405,50 @@ nav.tabs button.on svg { stroke-width: 2.2; }
         <div class="stat"><div class="label">Invested / mo</div><div class="val" id="hInvested">—</div></div>
       </div>
     </div>
+    <div class="card" id="projCard">
+      <div class="card-head" style="margin-bottom:2px"><h2>Wealth Projection</h2><span class="pill" id="projFI"></span></div>
+      <p class="sub">From your assets, income, spending history and Monthly Plan. <span id="projHistory"></span></p>
+      <div class="proj-controls">
+        <div><div class="hint" style="margin-bottom:4px">Based on</div><div class="seg" id="projBasis"><button type="button" data-basis="plan">Plan</button><button type="button" data-basis="history">History</button></div></div>
+        <label class="f">Horizon<select id="projYears"><option value="5">5 years</option><option value="10">10 years</option><option value="20">20 years</option><option value="30">30 years</option><option value="40">40 years</option></select></label>
+        <label class="f">Your age<input id="projAge" type="text" inputmode="numeric" autocomplete="off" placeholder="—" maxlength="3"></label>
+      </div>
+      <div class="eyebrow">Expected wealth</div>
+      <div class="proj-big" id="projBig">—</div>
+      <div class="hint" id="projRange"></div>
+      <label class="switch" style="margin-top:8px"><input type="checkbox" id="projReal"> Show in today's money (after ~2.5% inflation)</label>
+      <div class="chart-box" style="height:260px;margin-top:10px"><canvas id="projChart"></canvas></div>
+      <div class="stats four">
+        <div class="stat"><div class="label" id="projSpendLbl">Avg spend</div><div class="val" id="projSpend">—</div></div>
+        <div class="stat"><div class="label">Monthly surplus</div><div class="val" id="projSurplus">—</div></div>
+        <div class="stat"><div class="label">Savings rate</div><div class="val" id="projRate">—</div></div>
+        <div class="stat"><div class="label">Passive income then</div><div class="val" id="projPassive">—</div></div>
+      </div>
+      <div class="whatif">
+        <div class="top"><span>What if I earned more?</span><span class="pos" id="projExtraVal">None</span></div>
+        <input type="range" class="range" id="projExtra" min="0" max="5000" step="50" aria-label="Extra monthly income invested">
+        <div class="hint" id="projExtraFx"></div>
+      </div>
+      <div style="margin-top:14px"><h3 style="font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)">Milestones</h3><div class="list" id="projMilestones"></div></div>
+      <p class="disclaimer">Estimates, not guarantees. Assumes 3% / 6% / 9% yearly returns on investments (cautious / expected / optimistic), 1–3% on cash, contributions rising 2% a year, and a 4% safe withdrawal rate for passive income and financial independence (25× yearly spending). Not financial advice.</p>
+    </div>
+
+    <div class="card" id="growCard">
+      <h2>Grow Your Wealth</h2>
+      <p class="sub">Personal tips from your numbers, plus proven ways to earn and invest more.</p>
+      <h3 style="font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)">For you</h3>
+      <div id="growTips"></div>
+      <div class="seg four" id="growTabs" style="margin-top:16px">
+        <button type="button" data-tab="strategy">Strategies</button><button type="button" data-tab="passive">Passive</button><button type="button" data-tab="hustle">Side hustles</button><button type="button" data-tab="business">Business</button>
+      </div>
+      <div id="growList"></div>
+      <div class="note" style="margin-top:14px">
+        <strong>What's working right now?</strong> The advisor searches the web for current opportunities and filters them for your situation.
+        <div style="margin-top:10px"><button class="btn" id="growAI">Find current opportunities</button></div>
+      </div>
+      <div class="ai-out" id="growOut"></div>
+    </div>
+
     <div class="card">
       <div class="eyebrow">Spending Mix</div>
       <h2>Where Your Money Goes</h2>
@@ -911,7 +981,7 @@ function toast(msg) {
 function md(text) {
   const lines = esc(text).split('\n');
   let html = '', inList = false;
-  const inline = s => s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/(^|[^*])\*([^*]+)\*/g, '$1<em>$2</em>').replace(/`([^`]+)`/g, '<code>$1</code>');
+  const inline = s => s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/(^|[^*])\*([^*]+)\*/g, '$1<em>$2</em>').replace(/`([^`]+)`/g, '<code>$1</code>').replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
   for (const raw of lines) {
     const line = raw.trim();
     const li = line.match(/^(?:[-*•]|\d+[.)])\s+(.*)/);
@@ -1003,6 +1073,196 @@ function renderHome() {
   $('mixEmpty').hidden = cats.length > 0;
   $('mixChart').parentElement.hidden = cats.length === 0;
   if (cats.length) doughnut('mixChart', cats, cats.map(c => Math.round(by[c] * 100) / 100), cats.map(catColor));
+  S.history ||= {};
+  if (S.history[thisMonth()] !== Math.round(t.net)) { S.history[thisMonth()] = Math.round(t.net); save(); }
+  renderProjection(); renderGrow();
+}
+
+/* ---------- Wealth projection ---------- */
+const SCEN = {
+  low: { label: 'Cautious', inv: 0.03, cash: 0.01 },
+  base: { label: 'Expected', inv: 0.06, cash: 0.02 },
+  high: { label: 'Optimistic', inv: 0.09, cash: 0.03 },
+};
+const INFLATION = 0.025, INCOME_GROWTH = 0.02, SWR = 0.04;
+function proj() {
+  S.proj ||= { basis: 'plan', years: 20, real: true, extra: 0, age: '' };
+  return S.proj;
+}
+// Average monthly spending over up to 6 completed months that have transactions.
+function spendHistory() {
+  const cur = thisMonth();
+  const months = [...new Set(S.transactions.map(t => monthKey(t.date)))].filter(m => m < cur).sort().reverse().slice(0, 6);
+  if (!months.length) {
+    const fallback = monthTx().reduce((a, t) => a + num(t.amount), 0) || Object.values(S.budgets).reduce((a, b) => a + num(b), 0);
+    return { avg: fallback, months: 0 };
+  }
+  const total = months.reduce((a, m) => a + monthTx(m).reduce((x, t) => x + num(t.amount), 0), 0);
+  return { avg: total / months.length, months: months.length };
+}
+function monthlyFlows(P = proj()) {
+  const T = planTotals(), H = spendHistory(), income = num(S.income);
+  let invest, saveCash;
+  if (P.basis === 'history') {
+    const surplus = income - H.avg;
+    const share = (T.save + T.invest) > 0 ? T.invest / (T.save + T.invest) : 0.5;
+    invest = surplus > 0 ? surplus * share : 0;
+    saveCash = surplus > 0 ? surplus * (1 - share) : surplus;
+  } else { invest = T.invest; saveCash = T.save; }
+  return { invest: invest + num(P.extra), saveCash, spend: H.avg, histMonths: H.months, income };
+}
+function simulate(scen, P = proj(), flows = monthlyFlows(P)) {
+  const r = SCEN[scen];
+  let inv = portfolio().value, cash = num(S.cash), contrib = inv + cash;
+  const pts = [{ y: 0, total: inv + cash, contrib }];
+  for (let m = 1; m <= P.years * 12; m++) {
+    const g = Math.pow(1 + INCOME_GROWTH, Math.floor((m - 1) / 12));
+    inv = inv * (1 + r.inv / 12) + flows.invest * g;
+    cash = cash * (1 + r.cash / 12) + flows.saveCash * g;
+    if (cash < 0) { inv += cash; cash = 0; }
+    contrib += (flows.invest + flows.saveCash) * g;
+    if (m % 12 === 0) pts.push({ y: m / 12, total: Math.max(0, inv + cash), contrib: Math.max(0, contrib) });
+  }
+  return pts;
+}
+const deflate = (v, y) => v / Math.pow(1 + INFLATION, y);
+
+function renderProjection() {
+  const P = proj(), flows = monthlyFlows(P);
+  const runs = Object.fromEntries(Object.keys(SCEN).map(k => [k, simulate(k, P, flows)]));
+  const shown = (v, y) => P.real ? deflate(v, y) : v;
+  const end = k => shown(runs[k].at(-1).total, P.years);
+
+  document.querySelectorAll('#projBasis button').forEach(b => b.classList.toggle('on', b.dataset.basis === P.basis));
+  $('projYears').value = P.years; $('projReal').checked = !!P.real; $('projAge').value = P.age || '';
+  $('projExtra').value = P.extra; $('projExtraVal').textContent = P.extra ? `+${fmt0(P.extra)}/mo` : 'None';
+
+  $('projBig').textContent = fmt0(end('base'));
+  $('projRange').textContent = `in ${P.years} years${P.age ? ` (age ${+P.age + P.years})` : ''} · range ${fmt0(end('low'))} – ${fmt0(end('high'))}${P.real ? ' in today\'s money' : ''}`;
+
+  const rate = flows.income ? (flows.invest - num(P.extra) + Math.max(flows.saveCash, 0)) / flows.income * 100 : 0;
+  $('projSpend').textContent = fmt0(flows.spend);
+  $('projSpendLbl').textContent = flows.histMonths ? `Avg spend (${flows.histMonths} mo)` : 'Est. spend / mo';
+  $('projSurplus').textContent = fmt0(flows.income - flows.spend);
+  $('projSurplus').className = 'val ' + (flows.income - flows.spend < 0 ? 'neg' : '');
+  $('projRate').textContent = `${Math.round(rate)}%`;
+  $('projPassive').textContent = fmt0(end('base') * SWR / 12) + '/mo';
+
+  // Financial independence: 25x annual spending, compared in today's money.
+  const fiTarget = flows.spend * 12 / SWR;
+  const fiYear = runs.base.find(p => deflate(p.total, p.y) >= fiTarget);
+  const pill = $('projFI');
+  pill.textContent = fiYear ? (fiYear.y === 0 ? 'Financially independent' : `FI in ~${fiYear.y} yrs`) : `FI beyond ${P.years} yrs`;
+  pill.className = 'pill ' + (fiYear ? 'ok' : '');
+
+  const marks = [100000, 250000, 500000, 1000000, ['FI', fiTarget]];
+  $('projMilestones').innerHTML = marks.map(m => {
+    const [label, amt] = Array.isArray(m) ? [`Financial independence<div class="meta">${fmt0(m[1])} · 25× yearly spending</div>`, m[1]] : [fmt0(m), m];
+    const hit = runs.base.find(p => shown(p.total, p.y) >= amt);
+    const when = !hit ? `Not within ${P.years} yrs` : hit.y === 0 ? 'Reached ✓' : `${new Date().getFullYear() + hit.y}${P.age ? ` · age ${+P.age + hit.y}` : ''} · ${hit.y} yrs`;
+    return `<div class="item"><div class="main"><div class="title">${label}</div></div><div class="meta" style="font-weight:600;${hit ? 'color:var(--text)' : ''}">${when}</div></div>`;
+  }).join('');
+
+  if (P.extra > 0) {
+    const without = simulate('base', { ...P, extra: 0 }).at(-1).total;
+    $('projExtraFx').innerHTML = `Adds <strong class="pos">${fmt0(shown(runs.base.at(-1).total - without, P.years))}</strong> by year ${P.years}.`;
+  } else $('projExtraFx').textContent = 'Slide to see what a side hustle or raise could do.';
+
+  const nw = S.history ? Object.keys(S.history).sort() : [];
+  $('projHistory').textContent = nw.length > 1 ? `Net worth ${S.history[nw.at(-1)] - S.history[nw[0]] >= 0 ? 'up' : 'down'} ${fmt0(Math.abs(S.history[nw.at(-1)] - S.history[nw[0]]))} since ${monthName(nw[0])}.` : '';
+
+  const labels = runs.base.map(p => p.y === 0 ? 'Now' : `${new Date().getFullYear() + p.y}`);
+  const ser = (k, f = 'total') => runs[k].map(p => Math.round(shown(p[f], p.y)));
+  const hexA = (c, a) => { const h = c.replace('#', ''); if (h.length !== 6) return c; const n = parseInt(h, 16); return `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${a})`; };
+  const c1 = css('--c1'), c3 = css('--c3'), muted = css('--muted');
+  drawChart('projChart', {
+    type: 'line',
+    data: { labels, datasets: [
+      { label: SCEN.low.label, data: ser('low'), borderColor: hexA(c1, .35), borderWidth: 1, pointRadius: 0, fill: false, tension: .3 },
+      { label: SCEN.high.label, data: ser('high'), borderColor: hexA(c1, .35), borderWidth: 1, pointRadius: 0, fill: '-1', backgroundColor: hexA(c1, .14), tension: .3 },
+      { label: SCEN.base.label, data: ser('base'), borderColor: c1, borderWidth: 3, pointRadius: 0, pointHoverRadius: 4, fill: false, tension: .3 },
+      { label: 'Money put in', data: ser('base', 'contrib'), borderColor: hexA(c3, .9), borderDash: [5, 4], borderWidth: 1.5, pointRadius: 0, fill: false, tension: .3 },
+    ] },
+    options: {
+      maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
+      plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, boxHeight: 10, usePointStyle: true, color: css('--text'), filter: i => i.datasetIndex !== 0 } },
+        tooltip: { callbacks: { label: c => ` ${c.dataset.label}: ${fmt0(c.parsed.y)}` } } },
+      scales: { x: { grid: { display: false }, ticks: { maxTicksLimit: 6, color: muted } },
+        y: { grid: { color: css('--border') }, ticks: { color: muted, callback: v => v >= 1e6 ? fmt0(v / 1e6).replace(/\.?0+$/, '') + 'M' : v >= 1e3 ? fmt0(v / 1e3) + 'k' : fmt0(v) } } },
+    },
+  });
+}
+
+/* ---------- Grow your wealth ---------- */
+const IDEAS = {
+  strategy: [
+    { t: 'Pay yourself first, automatically', d: 'Schedule transfers to savings and investments the day you get paid. Automation beats willpower and is the single biggest predictor of building wealth.', tags: ['Free', '1 hour setup', 'Low risk'] },
+    { t: 'Low-cost global index ETFs', d: 'Buy a world-wide ETF (e.g. FTSE All-World / MSCI ACWI) monthly. Fees under 0.25% a year; historically ~6–8% nominal long-run returns, with real drawdowns along the way.', tags: ['From €25/mo', 'Long term', 'Medium risk'] },
+    { t: 'Use tax-advantaged accounts', d: 'Max out pension and tax-sheltered wrappers available where you live (employer pension match first: it is an instant return). Check your country\'s rules.', tags: ['Varies', 'Tax saving', 'Low risk'] },
+    { t: 'Grow your earning power', d: 'Negotiating a 10% raise or switching jobs often beats years of saving. Invest in a high-demand skill (AI tooling, data, sales, cloud) and ask for market rate.', tags: ['Time', 'High return', 'Low risk'] },
+    { t: 'Kill expensive debt', d: 'Paying off a 12–20% credit card or consumer loan is a guaranteed return no investment can match. Avalanche: highest rate first.', tags: ['Guaranteed return', 'Low risk'] },
+    { t: 'Save half of every raise', d: 'Let your lifestyle grow slowly: route 50% of any pay rise straight into your plan before you get used to it.', tags: ['Free', 'Habit'] },
+    { t: 'Rebalance once a year', d: 'Bring your allocation back to target annually. It forces "buy low, sell high" without predicting markets.', tags: ['15 min/yr', 'Risk control'] },
+  ],
+  passive: [
+    { t: 'Dividend & total-return ETF portfolio', d: 'The classic: a diversified portfolio you can draw ~3.5–4% a year from in retirement. Every €100k ≈ €300–330/month.', tags: ['Capital needed', 'Low effort', 'Medium risk'], mo: 300 },
+    { t: 'High-yield savings / money market funds', d: 'Park your emergency fund and short-term vision money where it earns interest instead of 0%. Safe, liquid, modest.', tags: ['Any amount', 'Very low effort', 'Low risk'], mo: 50 },
+    { t: 'Bond or deposit ladder', d: 'Stagger government bonds or fixed deposits to mature each year: predictable income and certainty for dated goals.', tags: ['€5k+', 'Low effort', 'Low risk'], mo: 80 },
+    { t: 'Digital products', d: 'Templates, Notion/Excel tools, presets, printables or short guides sold on Etsy/Gumroad. Build once, sell repeatedly; most earn little, a few earn a lot.', tags: ['<€200', '20–60h upfront', '€50–1,500/mo'], mo: 300 },
+    { t: 'Online course or paid community', d: 'Package expertise you already have (fitness, finance, a craft, a profession) into a course or membership.', tags: ['<€500', '40–100h upfront', '€200–5,000/mo'], mo: 600 },
+    { t: 'REITs / property funds', d: 'Real-estate exposure and rental-style income without being a landlord. Liquid, diversified, rate-sensitive.', tags: ['From €100', 'No effort', 'Medium risk'], mo: 40 },
+    { t: 'Rental property', d: 'Real income and leverage, but concentrated, illiquid and not truly passive. Run the numbers on net yield after costs, vacancy and tax.', tags: ['€30k+ deposit', 'Some effort', 'Medium–high risk'], mo: 400 },
+  ],
+  hustle: [
+    { t: 'Freelance your day-job skill', d: 'Design, dev, marketing, finance, writing, translation on Malt, Upwork, Fiverr or via your network. Fastest path from skill to cash.', tags: ['€0', '5–10 h/wk', '€500–3,000/mo'], mo: 1000 },
+    { t: 'AI automation for small businesses', d: 'Set up chatbots, booking flows, invoice/email automation and AI workflows for local businesses. Strong demand, few people who can do it well.', tags: ['€0–100', '5–10 h/wk', '€500–4,000/mo'], mo: 1200 },
+    { t: 'Personal training / online coaching', d: 'You already train: certify and coach clients in person or online with programs and check-ins.', tags: ['€300–1,000 cert', '4–8 h/wk', '€400–2,500/mo'], mo: 800 },
+    { t: 'Tutoring & exam prep', d: 'Languages, maths, coding or professional exams, online or local. Premium rates for niche subjects.', tags: ['€0', '3–6 h/wk', '€300–1,500/mo'], mo: 500 },
+    { t: 'Content & UGC creation', d: 'Short-form video for brands (user-generated content) or your own niche channel. Brand deals pay per video even with a small audience.', tags: ['Phone', '5 h/wk', '€0–2,000/mo'], mo: 400 },
+    { t: 'Reselling & flipping', d: 'Buy underpriced items (furniture, electronics, vintage) and resell on Vinted, eBay, Marketplace. Learn one category deeply.', tags: ['€200–500', '4–8 h/wk', '€200–1,000/mo'], mo: 350 },
+  ],
+  business: [
+    { t: 'AI automation agency', d: 'Productise the side hustle: fixed-price packages (AI receptionist, lead follow-up, document processing) with monthly retainers for maintenance.', tags: ['Low capital', 'Recurring revenue', 'Medium risk'], mo: 3000 },
+    { t: 'Niche micro-SaaS', d: 'A small tool solving one painful problem for a specific profession (e.g. scheduling for physios, quoting for tradespeople). AI makes building faster than ever.', tags: ['€0–2k', 'Recurring revenue', 'High risk'], mo: 2000 },
+    { t: 'Local premium services', d: 'Mobile car detailing, deep cleaning, gardening, handyman, pet care. Unsexy, in demand, quick to profit; scale by hiring.', tags: ['€1–5k', 'Fast to cash', 'Low–medium risk'], mo: 2500 },
+    { t: 'B2B consulting / fractional role', d: 'Sell your expertise to several companies part-time (fractional CFO, marketing lead, CTO). High day rates, low startup cost.', tags: ['€0', 'High margin', 'Low risk'], mo: 4000 },
+    { t: 'E-commerce with a niche brand', d: 'Own a small product niche (fitness gear, eco home goods) via Shopify plus print-on-demand or a small first batch. Test demand before buying stock.', tags: ['€500–5k', 'Inventory risk', 'High risk'], mo: 1500 },
+    { t: 'Health & fitness programs', d: 'Turn your training into structured programs, an app-based coaching service or group challenges with a community.', tags: ['<€1k', 'Scalable', 'Medium risk'], mo: 1500 },
+  ],
+};
+let growTab = 'strategy';
+
+function personalTips() {
+  const flows = monthlyFlows(), T = planTotals(), p = portfolio(), years = proj().years;
+  const fvLump = (amt, r) => amt * (Math.pow(1 + r, years) - Math.pow(1.02, years));
+  const fvMonthly = (pmt, r = 0.06) => pmt * ((Math.pow(1 + r / 12, years * 12) - 1) / (r / 12));
+  const tips = [];
+  const ef = flows.spend * 6, cash = num(S.cash);
+  if (cash < flows.spend * 3) tips.push({ i: '🛟', t: 'Build your emergency fund first', b: `You hold ${fmt0(cash)} in cash, under 3 months of spending. Aim for ${fmt0(ef)} (6 months) before investing heavily.`, w: 1e9 });
+  else if (cash - ef > 2000) { const x = cash - ef; tips.push({ i: '💤', t: 'Put idle cash to work', b: `About ${fmt0(x)} sits above a 6-month emergency fund. Invested instead (minus money for near-term visions), it could add ~${fmt0(fvLump(x, 0.06))} over ${years} years.`, w: fvLump(x, 0.06) }); }
+  if (T.rate < 20 && flows.income > 0) { const gap = flows.income * 0.2 - (T.save + T.invest); tips.push({ i: '📈', t: 'Lift your savings rate to 20%', b: `You plan to put away ${Math.round(T.rate)}% of income. Another ${fmt0(gap)}/mo would reach 20% and grow to ~${fmt0(fvMonthly(gap))} in ${years} years.`, w: fvMonthly(gap) }); }
+  if (T.unallocated > 50) tips.push({ i: '🧭', t: 'Give every euro a job', b: `${fmt0(T.unallocated)}/mo of your budget is unallocated. Investing it would grow to ~${fmt0(fvMonthly(T.unallocated))} in ${years} years.`, w: fvMonthly(T.unallocated) });
+  if (flows.spend > flows.income - T.save - T.invest + 1 && flows.histMonths) tips.push({ i: '⚠️', t: 'Spending is above your plan', b: `You've averaged ${fmt0(flows.spend)}/mo but your plan leaves ${fmt0(T.left)} to spend. Check the biggest categories on the Budget tab.`, w: 5e8 });
+  if (p.value > 0) {
+    const top = [...S.holdings].map(h => ({ h, v: num(h.units) * num(h.price) })).sort((a, b) => b.v - a.v)[0];
+    if (top && top.v / p.value > 0.4 && top.h.type !== 'ETF') tips.push({ i: '🎯', t: 'Reduce concentration risk', b: `${esc(top.h.ticker || top.h.name)} is ${Math.round(top.v / p.value * 100)}% of your portfolio. Consider spreading new money across a global index fund.`, w: 1e5 });
+    if ((p.byType.Crypto || 0) / p.value > 0.1) tips.push({ i: '🎢', t: 'Keep speculative assets small', b: `Crypto is ${Math.round(p.byType.Crypto / p.value * 100)}% of your portfolio. Many planners cap speculative holdings at 5–10%.`, w: 9e4 });
+  }
+  if (T.rate >= 30) tips.push({ i: '🏆', t: 'Excellent savings rate', b: `You're putting away ${Math.round(T.rate)}% of income, well above average. Keep fees low and stay the course.`, w: 1 });
+  return tips.sort((a, b) => b.w - a.w).slice(0, 4);
+}
+
+function renderGrow() {
+  const tips = personalTips();
+  $('growTips').innerHTML = tips.length ? tips.map(x => `<div class="tip"><div class="tip-i">${x.i}</div><div><div class="title">${esc(x.t)}</div><div class="meta">${x.b}</div></div></div>`).join('')
+    : '<div class="empty">Add income, spending and holdings to get personalised tips.</div>';
+  document.querySelectorAll('#growTabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === growTab));
+  $('growList').innerHTML = IDEAS[growTab].map((x, i) => `<div class="idea">
+    <div class="title">${esc(x.t)}</div>
+    <div class="meta">${esc(x.d)}</div>
+    <div class="idea-foot"><div class="tags">${x.tags.map(t => `<span class="tagx">${esc(t)}</span>`).join('')}</div>
+    ${x.mo ? `<button class="btn sm soft" data-model="${i}">Model +${fmt0(x.mo)}/mo</button>` : ''}</div>
+  </div>`).join('');
 }
 
 function renderBudget() {
@@ -1451,6 +1711,7 @@ function contextBlob() {
   return JSON.stringify({
     today: iso(new Date()), currency: S.currency,
     monthlyIncome: num(S.income), cashSavings: num(S.cash),
+    projection: (() => { const P = proj(), f = monthlyFlows(P), r = simulate('base', P, f).at(-1); return { basis: P.basis, years: P.years, age: P.age || null, avgMonthlySpendHistory: Math.round(f.spend), expectedWealthTodaysMoney: Math.round(deflate(r.total, P.years)), assumptions: '6% investments, 2% cash, 2.5% inflation' }; })(),
     monthlyPlan: (() => { const T = planTotals(), P = plan(); return { savingPerMonth: T.save, investingPerMonth: T.invest, leftToSpend: T.left, allocatedToCategories: T.allocated, unallocated: T.unallocated, savingsRatePct: Math.round(T.rate), generalSavings: num(P.general), generalInvesting: num(S.investPerMonth),
       toVisions: S.visions.filter(v => P.visions[v.id] && num(P.visions[v.id].amt)).map(v => ({ vision: v.name, perMonth: num(P.visions[v.id].amt), as: P.visions[v.id].kind || 'save', neededPerMonthForDeadline: visionNeed(v) })) }; })(),
     netWorth: r(t.net),
@@ -1473,7 +1734,7 @@ Ground every recommendation in the user's actual numbers, which are provided as 
 Be concise and practical: short paragraphs, bullet points for actions, at most ~250 words unless a plan genuinely needs more.
 Use simple markdown only (bold, bullet lists, short headings). You are not a regulated financial adviser; for investment questions give educational, evidence-based guidance (diversification, costs, time horizon, risk) rather than tips on individual securities.`;
 
-async function askAI(messages) {
+async function askAI(messages, { web = false } = {}) {
   const key = ls.get(KEY_KEY);
   if (!key && inClaude()) {
     const transcript = messages.map(m => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`).join('\n\n');
@@ -1481,6 +1742,9 @@ async function askAI(messages) {
   }
   if (!key) throw new Error('No API key. Add your Anthropic API key in Settings to use the advisor here.');
   const workspace = ls.get(WS_KEY);
+  const tools = web ? [{ type: 'web_search_20260209', name: 'web_search', max_uses: 6 }] : null;
+  let content = [], data;
+  for (let turn = 0; turn < 4; turn++) {
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -1498,10 +1762,11 @@ async function askAI(messages) {
       output_config: { effort: 'medium' },
       fallbacks: 'default',
       system: SYSTEM,
-      messages,
+      messages: content.length ? [...messages, { role: 'assistant', content }] : messages,
+      ...(tools ? { tools } : {}),
     }),
   });
-  const data = await res.json().catch(() => ({}));
+  data = await res.json().catch(() => ({}));
   if (!res.ok) {
     const msg = data?.error?.message || `HTTP ${res.status}`;
     if (res.status === 401) throw new Error('Invalid API key. Check it in Settings.');
@@ -1509,16 +1774,23 @@ async function askAI(messages) {
     throw new Error(msg);
   }
   if (data.stop_reason === 'refusal') throw new Error('The advisor declined to answer that request.');
-  const text = (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('\n').trim();
+  content = [...content, ...(data.content || [])];
+  if (data.stop_reason !== 'pause_turn') break;
+  }
+  const blocks = content.filter(b => b.type === 'text');
+  let text = blocks.map(b => b.text).join('').trim();
   if (!text) throw new Error('Empty response from the advisor.');
+  const sources = new Map();
+  blocks.forEach(b => (b.citations || []).forEach(c => { if (c.url && /^https?:/.test(c.url)) sources.set(c.url, c.title || c.url); }));
+  if (sources.size) text += '\n\n**Sources**\n' + [...sources].slice(0, 8).map(([u, t]) => `- [${t.replace(/[\[\]]/g, '')}](${u})`).join('\n');
   return text;
 }
 
-async function runAdvisor(outEl, btn, prompt) {
+async function runAdvisor(outEl, btn, prompt, opts) {
   outEl.className = 'ai-out show'; outEl.innerHTML = '<span class="loading">Thinking through your numbers…</span>';
   btn.disabled = true;
   try {
-    const text = await askAI([{ role: 'user', content: `My data:\n${contextBlob()}\n\n${prompt}` }]);
+    const text = await askAI([{ role: 'user', content: `My data:\n${contextBlob()}\n\n${prompt}` }], opts);
     outEl.innerHTML = md(text);
   } catch (e) {
     outEl.className = 'ai-out show err'; outEl.textContent = e.message || String(e);
@@ -1634,6 +1906,27 @@ function bind() {
     S.holdings.push({ id: uid(), name: $('hName').value.trim(), ticker: $('hTicker').value.trim().toUpperCase(), type: $('hType').value, units: num($('hUnits').value), cost: num($('hCost').value), price: num($('hPrice').value) });
     save(); e.target.reset(); renderAll(); toast('Holding added');
   });
+
+  // Wealth projection
+  const reproj = () => { save(); renderProjection(); renderGrow(); };
+  $('projBasis').addEventListener('click', e => { const b = e.target.closest('[data-basis]'); if (b) { proj().basis = b.dataset.basis; reproj(); } });
+  $('projYears').addEventListener('change', e => { proj().years = +e.target.value; reproj(); });
+  $('projReal').addEventListener('change', e => { proj().real = e.target.checked; reproj(); });
+  $('projAge').addEventListener('change', e => { const a = parseInt(e.target.value, 10); proj().age = a > 0 && a < 120 ? a : ''; reproj(); });
+  $('projExtra').addEventListener('input', e => { proj().extra = +e.target.value; renderProjection(); });
+  $('projExtra').addEventListener('change', () => save());
+  $('growTabs').addEventListener('click', e => { const b = e.target.closest('[data-tab]'); if (b) { growTab = b.dataset.tab; renderGrow(); } });
+  $('growList').addEventListener('click', e => {
+    const b = e.target.closest('[data-model]'); if (!b) return;
+    const x = IDEAS[growTab][+b.dataset.model];
+    proj().extra = Math.min(5000, x.mo); reproj();
+    $('projCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    toast(`Modelling ${x.t}: +${fmt0(x.mo)}/mo`);
+  });
+  $('growAI').addEventListener('click', e => runAdvisor($('growOut'), e.currentTarget,
+    `Search the web for what is working right now (${new Date().toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}) and recommend ways for me to grow my wealth, tailored to my numbers, skills hinted at by my data (e.g. I train regularly) and currency/region. Give:\n` +
+    '1. Top 3 side hustles with realistic monthly earnings and time needed\n2. Top 3 passive income options with current yields/rates\n3. Top 2 business ideas with current demand signals and startup cost\n4. The single highest-impact move from my own numbers\n' +
+    'Be specific and realistic about risk and effort; flag anything hype-driven. Keep it under 400 words.', { web: true }));
 
   // Vision
   $('visionForm').addEventListener('submit', e => {
