@@ -195,6 +195,25 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
 .range:focus { box-shadow: none; }
 .whatif { background: var(--surface-2); border-radius: 14px; padding: 12px 14px; margin-top: 12px; }
 .whatif .top { display: flex; justify-content: space-between; font-weight: 700; font-size: 14px; margin-bottom: 6px; }
+.basis-box { background: var(--surface-2); border-radius: 16px; padding: 14px; margin-bottom: 14px; }
+.basis-box h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-bottom: 6px; }
+.basis-row { display: grid; grid-template-columns: 30px minmax(0, 1fr) auto; gap: 10px; align-items: start; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+.basis-row:last-of-type { border-bottom: 0; }
+.basis-row .ic { width: 30px; height: 30px; border-radius: 9px; background: var(--surface); display: grid; place-items: center; font-size: 15px; }
+.basis-row b { font-weight: 700; font-size: 14px; }
+.basis-row .d { color: var(--muted); font-size: 12px; margin-top: 1px; }
+.basis-row .v { font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; text-align: right; }
+.basis-sum { margin-top: 8px; font-size: 14px; font-weight: 600; }
+.proj-legend { display: grid; gap: 8px; margin: 10px 0 4px; }
+.proj-legend .lg { display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; gap: 10px; align-items: center; font-size: 13px; }
+.proj-legend .lg b { font-weight: 700; }
+.proj-legend .lg .v { font-weight: 700; font-variant-numeric: tabular-nums; text-align: right; }
+.proj-legend .lg .d { color: var(--muted); font-size: 12px; }
+.proj-legend svg { width: 28px; height: 14px; display: block; }
+details.how { margin-top: 10px; background: var(--surface-2); border-radius: 14px; padding: 10px 14px; font-size: 13px; }
+details.how summary { cursor: pointer; font-weight: 700; }
+details.how ol { margin: 8px 0 2px; padding-left: 18px; color: var(--muted); display: grid; gap: 4px; }
+details.how b { color: var(--text); }
 .disclaimer { font-size: 11px; color: var(--faint); margin-top: 12px; line-height: 1.4; }
 .tip { display: grid; grid-template-columns: 36px 1fr; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--border); }
 .tip:last-child { border-bottom: 0; }
@@ -407,17 +426,20 @@ nav.tabs button.on svg { stroke-width: 2.2; }
     </div>
     <div class="card" id="projCard">
       <div class="card-head" style="margin-bottom:2px"><h2>Wealth Projection</h2><span class="pill" id="projFI"></span></div>
-      <p class="sub">From your assets, income, spending history and Monthly Plan. <span id="projHistory"></span></p>
+      <p class="sub">Where your current habits take you if nothing changes. <span id="projHistory"></span></p>
       <div class="proj-controls">
         <div><div class="hint" style="margin-bottom:4px">Based on</div><div class="seg" id="projBasis"><button type="button" data-basis="plan">Plan</button><button type="button" data-basis="history">History</button></div></div>
         <label class="f">Horizon<select id="projYears"><option value="5">5 years</option><option value="10">10 years</option><option value="20">20 years</option><option value="30">30 years</option><option value="40">40 years</option></select></label>
         <label class="f">Your age<input id="projAge" type="text" inputmode="numeric" autocomplete="off" placeholder="—" maxlength="3"></label>
       </div>
+      <div class="basis-box" id="projBasisBox"></div>
       <div class="eyebrow">Expected wealth</div>
       <div class="proj-big" id="projBig">—</div>
       <div class="hint" id="projRange"></div>
       <label class="switch" style="margin-top:8px"><input type="checkbox" id="projReal"> Show in today's money (after ~2.5% inflation)</label>
-      <div class="chart-box" style="height:260px;margin-top:10px"><canvas id="projChart"></canvas></div>
+      <div class="chart-box" style="height:240px;margin-top:10px"><canvas id="projChart" role="img" aria-label="Projected wealth over time"></canvas></div>
+      <div class="proj-legend" id="projLegend"></div>
+      <details class="how"><summary>How this is calculated</summary><ol id="projHow"></ol></details>
       <div class="stats four">
         <div class="stat"><div class="label" id="projSpendLbl">Avg spend</div><div class="val" id="projSpend">—</div></div>
         <div class="stat"><div class="label">Monthly surplus</div><div class="val" id="projSurplus">—</div></div>
@@ -430,7 +452,7 @@ nav.tabs button.on svg { stroke-width: 2.2; }
         <div class="hint" id="projExtraFx"></div>
       </div>
       <div style="margin-top:14px"><h3 style="font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)">Milestones</h3><div class="list" id="projMilestones"></div></div>
-      <p class="disclaimer">Estimates, not guarantees. Assumes 3% / 6% / 9% yearly returns on investments (cautious / expected / optimistic), 1–3% on cash, contributions rising 2% a year, and a 4% safe withdrawal rate for passive income and financial independence (25× yearly spending). Not financial advice.</p>
+      <p class="disclaimer">Estimates, not guarantees: real returns vary year to year and can be negative. Not financial advice.</p>
     </div>
 
     <div class="card" id="growCard">
@@ -1126,6 +1148,7 @@ function simulate(scen, P = proj(), flows = monthlyFlows(P)) {
   return pts;
 }
 const deflate = (v, y) => v / Math.pow(1 + INFLATION, y);
+const pctTxt = r => `${+(r * 100).toFixed(1)}%`;
 
 function renderProjection() {
   const P = proj(), flows = monthlyFlows(P);
@@ -1175,22 +1198,73 @@ function renderProjection() {
   const ser = (k, f = 'total') => runs[k].map(p => Math.round(shown(p[f], p.y)));
   const hexA = (c, a) => { const h = c.replace('#', ''); if (h.length !== 6) return c; const n = parseInt(h, 16); return `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${a})`; };
   const c1 = css('--c1'), c3 = css('--c3'), muted = css('--muted');
+  const compact = v => { try { return new Intl.NumberFormat(undefined, { style: 'currency', currency: S.currency, notation: 'compact', maximumFractionDigits: 1 }).format(v); } catch { return fmt0(v); } };
+  const cL = css('--c4'), cH = css('--c3'), cIn = css('--c8');
+  const swLine = (c, w, dash) => `<svg viewBox="0 0 28 14"><line x1="1" y1="7" x2="27" y2="7" stroke="${c}" stroke-width="${w}" stroke-linecap="round"${dash ? ` stroke-dasharray="${dash}"` : ''}/></svg>`;
+  const lastIn = ser('base', 'contrib').at(-1);
+  $('projLegend').innerHTML = [
+    [swLine(cH, 2), `Optimistic · ${pctTxt(SCEN.high.inv)}/yr`, 'Strong markets', ser('high').at(-1)],
+    [swLine(c1, 3.5), `Expected · ${pctTxt(SCEN.base.inv)}/yr`, 'Long-run average for a diversified portfolio', ser('base').at(-1)],
+    [swLine(cL, 2), `Cautious · ${pctTxt(SCEN.low.inv)}/yr`, 'Weak markets', ser('low').at(-1)],
+    [swLine(cIn, 2, '5 4'), 'Your money in', `Net worth today + all you add, no returns. Growth on top: ${compact(Math.max(0, ser('base').at(-1) - lastIn))} (expected)`, lastIn],
+  ].map(([sv, t, d, v]) => `<div class="lg">${sv}<div><b>${t}</b><div class="d">${d}</div></div><span class="v">${fmt0(v)}</span></div>`).join('');
+
+  const H = spendHistory();
+  $('projHow').innerHTML = [
+    `<b>Start</b> with your net worth today: cash ${fmt0(num(S.cash))} + investments ${fmt0(portfolio().value)}.`,
+    `<b>Every month</b> add ${fmt0(flows.invest)} to investments and ${flows.saveCash >= 0 ? fmt0(flows.saveCash) + ' to cash' : 'take ' + fmt0(-flows.saveCash) + ' from cash'}; these amounts rise ${pctTxt(INCOME_GROWTH)} a year with your income.`,
+    `<b>Returns</b> compound monthly: investments at ${pctTxt(SCEN.low.inv)} / ${pctTxt(SCEN.base.inv)} / ${pctTxt(SCEN.high.inv)} a year (cautious / expected / optimistic), cash at ${pctTxt(SCEN.low.cash)} / ${pctTxt(SCEN.base.cash)} / ${pctTxt(SCEN.high.cash)}.`,
+    P.real ? `<b>Today's money:</b> each year is divided by 1.025<sup>years</sup> to remove ${pctTxt(INFLATION)} inflation.` : `<b>Future euros:</b> not adjusted for inflation.`,
+    `<b>Passive income</b> = wealth × ${pctTxt(SWR)} ÷ 12. <b>Financial independence</b> = 25 × yearly spending (${fmt0(flows.spend * 12)}).`,
+  ].map(x => `<li>${x}</li>`).join('');
+
+  // End-of-line labels so each scenario is named on the chart itself.
+  const endLabels = {
+    id: 'endLabels',
+    afterDatasetsDraw(chart) {
+      const { ctx, chartArea } = chart;
+      const items = [[2, 'Optimistic', cH], [1, 'Expected', c1], [0, 'Cautious', cL], [3, 'Money in', cIn]]
+        .map(([i, t, c]) => { const pt = chart.getDatasetMeta(i).data.at(-1); return pt && { t, c, y: pt.y }; }).filter(Boolean)
+        .sort((a, b) => a.y - b.y);
+      for (let i = 1; i < items.length; i++) items[i].y = Math.max(items[i].y, items[i - 1].y + 13);
+      ctx.save(); ctx.font = '600 11px "Plus Jakarta Sans", system-ui, sans-serif'; ctx.textBaseline = 'middle';
+      items.forEach(({ t, c, y }) => { ctx.fillStyle = c; ctx.beginPath(); ctx.arc(chartArea.right + 7, y, 3, 0, 7); ctx.fill(); ctx.fillStyle = css('--text'); ctx.fillText(t, chartArea.right + 13, Math.min(y, chartArea.bottom)); });
+      ctx.restore();
+    },
+  };
   drawChart('projChart', {
     type: 'line',
+    plugins: [endLabels],
     data: { labels, datasets: [
-      { label: SCEN.low.label, data: ser('low'), borderColor: hexA(c1, .35), borderWidth: 1, pointRadius: 0, fill: false, tension: .3 },
-      { label: SCEN.high.label, data: ser('high'), borderColor: hexA(c1, .35), borderWidth: 1, pointRadius: 0, fill: '-1', backgroundColor: hexA(c1, .14), tension: .3 },
-      { label: SCEN.base.label, data: ser('base'), borderColor: c1, borderWidth: 3, pointRadius: 0, pointHoverRadius: 4, fill: false, tension: .3 },
-      { label: 'Money put in', data: ser('base', 'contrib'), borderColor: hexA(c3, .9), borderDash: [5, 4], borderWidth: 1.5, pointRadius: 0, fill: false, tension: .3 },
+      { label: `Cautious (${pctTxt(SCEN.low.inv)})`, data: ser('low'), borderColor: cL, borderWidth: 1.5, pointRadius: 0, fill: false, tension: .3 },
+      { label: `Expected (${pctTxt(SCEN.base.inv)})`, data: ser('base'), borderColor: c1, borderWidth: 3.5, pointRadius: 0, pointHoverRadius: 4, fill: false, tension: .3 },
+      { label: `Optimistic (${pctTxt(SCEN.high.inv)})`, data: ser('high'), borderColor: cH, borderWidth: 1.5, pointRadius: 0, fill: 0, backgroundColor: hexA(c1, .1), tension: .3 },
+      { label: 'Your money in', data: ser('base', 'contrib'), borderColor: cIn, borderDash: [5, 4], borderWidth: 2, pointRadius: 0, fill: false, tension: .3 },
     ] },
     options: {
       maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
-      plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, boxHeight: 10, usePointStyle: true, color: css('--text'), filter: i => i.datasetIndex !== 0 } },
-        tooltip: { callbacks: { label: c => ` ${c.dataset.label}: ${fmt0(c.parsed.y)}` } } },
-      scales: { x: { grid: { display: false }, ticks: { maxTicksLimit: 6, color: muted } },
-        y: { grid: { color: css('--border') }, ticks: { color: muted, callback: v => v >= 1e6 ? fmt0(v / 1e6).replace(/\.?0+$/, '') + 'M' : v >= 1e3 ? fmt0(v / 1e3) + 'k' : fmt0(v) } } },
+      layout: { padding: { right: 74 } },
+      plugins: { legend: { display: false },
+        tooltip: { itemSort: (a, b) => [2, 1, 0, 3].indexOf(a.datasetIndex) - [2, 1, 0, 3].indexOf(b.datasetIndex), callbacks: { label: c => ` ${c.dataset.label}: ${fmt0(c.parsed.y)}` } } },
+      scales: { x: { grid: { display: false }, ticks: { maxTicksLimit: 5, color: muted, maxRotation: 0 } },
+        y: { grid: { color: css('--border') }, ticks: { color: muted, maxTicksLimit: 6, callback: v => compact(v) } } },
     },
   });
+
+  // Plain-language basis: habits + returns on what you already own.
+  const inv = portfolio().value, cash = num(S.cash), T = planTotals();
+  const rows = [
+    ['💼', 'Your net worth today', `${fmt0(cash)} cash + ${fmt0(inv)} investments`, fmt0(cash + inv)],
+    P.basis === 'history'
+      ? ['🧾', 'Your saving & spending habits', `You earn ${fmt0(flows.income)} and spent ${fmt0(H.avg)}/mo on average${H.months ? ` over the last ${H.months} months` : ''}. The difference is assumed saved/invested.`, `${flows.income - H.avg >= 0 ? '+' : ''}${fmt0(flows.income - H.avg)}/mo`]
+      : ['🧾', 'Your saving habits (Monthly Plan)', `${fmt0(T.invest)} invested + ${fmt0(T.save)} saved each month. Actual spending history leaves ${fmt0(flows.income - H.avg)}/mo; switch to History to use that.`, `+${fmt0(T.invest + T.save)}/mo`],
+    ['📈', `Investment returns · ${pctTxt(SCEN.base.inv)}/yr expected`, `${pctTxt(SCEN.base.inv)} of your ${fmt0(inv)} invested ≈ ${fmt0(inv * SCEN.base.inv)} in year one, plus returns on everything you add (${pctTxt(SCEN.low.inv)}–${pctTxt(SCEN.high.inv)} in cautious/optimistic).`, `≈ ${fmt0(inv * SCEN.base.inv / 12)}/mo`],
+    ['🏦', `Interest on cash · ${pctTxt(SCEN.base.cash)}/yr`, `${pctTxt(SCEN.base.cash)} of ${fmt0(cash)} ≈ ${fmt0(cash * SCEN.base.cash)} in year one.`, `≈ ${fmt0(cash * SCEN.base.cash / 12)}/mo`],
+  ];
+  if (P.extra) rows.push(['🚀', 'What-if extra income', 'Invested every month on top of your habits.', `+${fmt0(P.extra)}/mo`]);
+  $('projBasisBox').innerHTML = `<h3>What this projection is based on</h3>` +
+    rows.map(([ic, t, d, v]) => `<div class="basis-row"><div class="ic">${ic}</div><div><b>${t}</b><div class="d">${d}</div></div><span class="v">${v}</span></div>`).join('') +
+    `<div class="basis-sum">Keep these habits for ${P.years} years and you'd have about <span style="color:var(--accent)">${fmt0(ser('base').at(-1))}</span>${P.real ? " in today's money" : ''}.</div>`;
 }
 
 /* ---------- Grow your wealth ---------- */
